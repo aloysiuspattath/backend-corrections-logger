@@ -4,6 +4,7 @@ Flask + Flask-SocketIO server with Authentication
 Run with: python server.py
 """
 import os
+import json
 import socket
 import secrets
 from datetime import datetime
@@ -14,6 +15,35 @@ import database
 import excel_handler
 import backup_manager
 import auth
+
+# ─── APP CONFIG ────────────────────────────────────────────────────────────────
+APP_CONFIG_FILE = 'app_config.json'
+DEFAULT_APP_CONFIG = {
+    'host': '0.0.0.0',
+    'port': 5000,
+    'shared_excel_path': '',
+    'auto_sync_excel': False
+}
+
+def load_app_config():
+    if os.path.exists(APP_CONFIG_FILE):
+        with open(APP_CONFIG_FILE, 'r') as f:
+            cfg = json.load(f)
+            return {**DEFAULT_APP_CONFIG, **cfg}
+    return DEFAULT_APP_CONFIG.copy()
+
+def save_app_config(cfg):
+    with open(APP_CONFIG_FILE, 'w') as f:
+        json.dump(cfg, f, indent=2)
+
+def auto_sync_shared_excel():
+    """Auto-export to shared Excel file if configured."""
+    try:
+        cfg = load_app_config()
+        if cfg.get('auto_sync_excel') and cfg.get('shared_excel_path', '').strip():
+            excel_handler.export_to_shared(cfg['shared_excel_path'])
+    except Exception as e:
+        print(f'[Auto-Sync Warning] {e}')
 
 # ─── APP SETUP ─────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -159,6 +189,7 @@ def add_correction():
             payload['executed_by'] = request.current_user['display_name']
         rec = database.add_correction(payload)
         socketio.emit('correction_added', {**rec, '_by': request.current_user['display_name']})
+        auto_sync_shared_excel()
         return jsonify(rec), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -199,6 +230,7 @@ def update_correction(cid):
         rec = database.update_correction(cid, request.json or {})
         if rec:
             socketio.emit('correction_updated', {**rec, '_by': request.current_user['display_name']})
+            auto_sync_shared_excel()
             return jsonify(rec)
         return jsonify({'error': 'Not found'}), 404
     except Exception as e:
@@ -211,6 +243,7 @@ def delete_correction(cid):
         success = database.delete_correction(cid)
         if success:
             socketio.emit('correction_deleted', {'id': cid, '_by': request.current_user['display_name']})
+            auto_sync_shared_excel()
             return jsonify({'success': True})
         return jsonify({'error': 'Not found'}), 404
     except Exception as e:
@@ -438,6 +471,66 @@ def cx_ticket(ticket_no):
         'data':       None
     }), 501
 
+# ─── APP CONFIG API ────────────────────────────────────────────────────────────
+
+@app.route('/api/app-config', methods=['GET'])
+@auth.admin_required
+def get_app_config():
+    try:
+        return jsonify(load_app_config())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/app-config', methods=['POST'])
+@auth.admin_required
+def save_app_config_api():
+    try:
+        data = request.json or {}
+        cfg = load_app_config()
+        if 'host' in data: cfg['host'] = str(data['host']).strip() or '0.0.0.0'
+        if 'port' in data:
+            try: cfg['port'] = int(data['port'])
+            except: cfg['port'] = 5000
+        if 'shared_excel_path' in data: cfg['shared_excel_path'] = str(data['shared_excel_path']).strip()
+        if 'auto_sync_excel' in data: cfg['auto_sync_excel'] = bool(data['auto_sync_excel'])
+        save_app_config(cfg)
+        return jsonify({'success': True, 'config': cfg, 'message': 'Settings saved. Restart the server for host/port changes to take effect.'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/shared-excel/sync', methods=['POST'])
+@auth.admin_required
+def sync_shared_excel():
+    """Manual sync: export all data to the shared Excel file."""
+    try:
+        cfg = load_app_config()
+        path = cfg.get('shared_excel_path', '').strip()
+        if not path:
+            return jsonify({'error': 'Shared Excel path is not configured.'}), 400
+        excel_handler.export_to_shared(path)
+        return jsonify({'success': True, 'message': f'Data synced to {path}'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/shared-excel/import', methods=['POST'])
+@auth.admin_required
+def import_from_shared_excel():
+    """Import new entries from the shared Excel file into the portal."""
+    try:
+        cfg = load_app_config()
+        path = cfg.get('shared_excel_path', '').strip()
+        if not path:
+            return jsonify({'error': 'Shared Excel path is not configured.'}), 400
+        if not os.path.exists(path):
+            return jsonify({'error': f'File not found: {path}'}), 404
+        with open(path, 'rb') as f:
+            result = excel_handler.import_from_excel(f, mode='skip')
+        if result.get('imported', 0) > 0:
+            socketio.emit('data_imported', {'count': result['imported']})
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # ─── WEBSOCKET EVENTS ──────────────────────────────────────────────────────────
 
 @socketio.on('connect')
@@ -472,6 +565,9 @@ if __name__ == '__main__':
     os.makedirs('uploads', exist_ok=True)
     database.init_db()
     auth.init_users_table()
+    app_cfg = load_app_config()
+    host = app_cfg.get('host', '0.0.0.0')
+    port = app_cfg.get('port', 5000)
     local_ip = get_local_ip()
     print('\n' + '='*54)
     print('   ____   ____  ____  ')
@@ -482,9 +578,12 @@ if __name__ == '__main__':
     print('')
     print('  Backend Corrections Portal')
     print('='*54)
-    print(f'  Local:   http://localhost:5000')
-    print(f'  Network: http://{local_ip}:5000')
+    print(f'  Local:   http://localhost:{port}')
+    print(f'  Network: http://{local_ip}:{port}')
     print('  Default:  admin / admin123')
+    if app_cfg.get('shared_excel_path'):
+        print(f'  Excel:   {app_cfg["shared_excel_path"]}')
+        print(f'  Sync:    {"Auto" if app_cfg.get("auto_sync_excel") else "Manual"}')
     print('  Press Ctrl+C to stop')
     print('='*54 + '\n')
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    socketio.run(app, host=host, port=port, debug=False)

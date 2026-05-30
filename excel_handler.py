@@ -295,3 +295,98 @@ def export_to_csv():
     for rec in records:
         writer.writerow({k: rec.get(k, '') for k in fieldnames})
     return output.getvalue()
+
+# ─── EXPORT: SHARED EXCEL ──────────────────────────────────────────────────────
+
+def export_to_shared(filepath):
+    """Export all corrections to a specific file path (shared drive / SharePoint sync folder).
+    Overwrites the file each time to keep it in sync with the portal."""
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        raise Exception('openpyxl not installed.')
+
+    records = database.get_all_for_export()
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Backend Corrections'
+
+    headers = ['ID', 'Service Ticket', 'Query Executed', 'Executed By', 'Date', 'Status', 'Notes', 'Created At']
+    col_widths = [8, 22, 65, 20, 14, 20, 35, 22]
+
+    hdr_fill = PatternFill(start_color='1e2640', end_color='1e2640', fill_type='solid')
+    hdr_font = Font(bold=True, color='FFFFFF', name='Calibri', size=11)
+    thin_border = Border(bottom=Side(style='medium', color='4f7ef8'))
+
+    for col, (hdr, width) in enumerate(zip(headers, col_widths), 1):
+        cell = ws.cell(row=1, column=col, value=hdr)
+        cell.font = hdr_font
+        cell.fill = hdr_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = thin_border
+        ws.column_dimensions[get_column_letter(col)].width = width
+
+    status_fills = {
+        'Completed':           PatternFill(start_color='C6EFCE', end_color='C6EFCE', fill_type='solid'),
+        'Pending Verification':PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid'),
+        'Rolled Back':         PatternFill(start_color='BDD7EE', end_color='BDD7EE', fill_type='solid'),
+        'Failed':              PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid'),
+    }
+
+    for row_i, rec in enumerate(records, 2):
+        values = [rec.get('id'), rec.get('ticket'), rec.get('query'),
+                  rec.get('executed_by'), rec.get('date'), rec.get('status'),
+                  rec.get('notes', ''), rec.get('created_at', '')]
+        for col_i, val in enumerate(values, 1):
+            cell = ws.cell(row=row_i, column=col_i, value=val)
+            cell.alignment = Alignment(wrap_text=(col_i in [3, 7]), vertical='top')
+            if row_i % 2 == 0:
+                cell.fill = PatternFill(start_color='F8FAFF', end_color='F8FAFF', fill_type='solid')
+        status = rec.get('status', '')
+        if status in status_fills:
+            ws.cell(row=row_i, column=6).fill = status_fills[status]
+
+    ws.freeze_panes = 'A2'
+    if records:
+        ws.auto_filter.ref = f'A1:H{len(records)+1}'
+
+    # Write to temp file first, then replace (handles Office file locks)
+    parent = os.path.dirname(filepath) or '.'
+    os.makedirs(parent, exist_ok=True)
+
+    import tempfile, time
+    base = os.path.basename(filepath)
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix='.xlsx', prefix='~bcp_', dir=parent)
+    os.close(tmp_fd)
+    try:
+        wb.save(tmp_path)
+    except Exception as e:
+        os.unlink(tmp_path)
+        raise Exception(f'Failed to write temp file: {e}')
+
+    # Try to replace the target file (retry if locked by Office / OneDrive)
+    last_err = None
+    for attempt in range(4):
+        try:
+            if os.path.exists(filepath):
+                os.replace(tmp_path, filepath)
+            else:
+                os.rename(tmp_path, filepath)
+            return filepath
+        except PermissionError as e:
+            last_err = e
+            if attempt < 3:
+                time.sleep(1)  # wait 1s and retry
+    # All retries failed — save alongside with timestamp
+    fallback = os.path.join(parent, f'corrections_sync_{datetime.now().strftime("%H%M%S")}.xlsx')
+    try:
+        os.rename(tmp_path, fallback)
+    except Exception:
+        pass
+    raise Exception(
+        f'Could not write to "{base}" — file may be open in Excel. '
+        f'Data saved to "{os.path.basename(fallback)}" instead. '
+        f'Close the file and try Sync again.'
+    )

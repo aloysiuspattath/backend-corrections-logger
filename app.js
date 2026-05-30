@@ -430,7 +430,10 @@ function switchView(name) {
     resetForm();
   }
   if (name === 'backups') loadBackups();
-  if (name === 'settings' && isAdmin) loadUsers();
+  if (name === 'settings') {
+    if (isAdmin) loadUsers();
+    loadAppConfig();
+  }
 
   // Close mobile sidebar
   document.getElementById('sidebar').classList.remove('mobile-open');
@@ -958,6 +961,116 @@ function setupImportExport() {
   document.getElementById('exportXlsBtn').onclick = () => window.location = '/api/export/excel';
 }
 
+// ─── APP CONFIG (Server + Excel Sync) ─────────────────────────────────────────
+
+async function loadAppConfig() {
+  if (!isAdmin) return;
+  try {
+    const res = await api('/api/app-config');
+    if (!res || !res.ok) return;
+    const cfg = await res.json();
+    document.getElementById('serverHost').value = cfg.host || '0.0.0.0';
+    document.getElementById('serverPort').value = cfg.port || 5000;
+    document.getElementById('sharedExcelPath').value = cfg.shared_excel_path || '';
+    document.getElementById('autoSyncExcel').checked = !!cfg.auto_sync_excel;
+    // Update access URL display
+    const port = cfg.port || 5000;
+    document.getElementById('accessUrlDisplay').textContent = `http://<machine-ip>:${port}`;
+  } catch (e) { console.error('Config load error:', e); }
+}
+
+function setupAppConfig() {
+  // Server config save
+  document.getElementById('saveServerConfigBtn').addEventListener('click', async () => {
+    const host = document.getElementById('serverHost').value.trim();
+    const port = parseInt(document.getElementById('serverPort').value) || 5000;
+    const msgEl = document.getElementById('serverConfigMsg');
+    try {
+      const res = await api('/api/app-config', { method: 'POST', body: { host, port } });
+      if (!res) return;
+      const d = await res.json();
+      msgEl.style.display = '';
+      if (d.success) {
+        msgEl.className = 'oracle-test-result success-msg';
+        msgEl.textContent = d.message || 'Saved! Restart the server for changes to take effect.';
+        toast(d.message || 'Server config saved.', 'success');
+      } else {
+        msgEl.className = 'oracle-test-result error-msg';
+        msgEl.textContent = d.error || 'Save failed.';
+      }
+    } catch (e) { toast('Error saving config.', 'error'); }
+  });
+
+  // Shared Excel save
+  document.getElementById('saveExcelSyncBtn').addEventListener('click', async () => {
+    const path = document.getElementById('sharedExcelPath').value.trim();
+    const autoSync = document.getElementById('autoSyncExcel').checked;
+    const msgEl = document.getElementById('excelSyncMsg');
+    try {
+      const res = await api('/api/app-config', { method: 'POST', body: { shared_excel_path: path, auto_sync_excel: autoSync } });
+      if (!res) return;
+      const d = await res.json();
+      msgEl.style.display = '';
+      if (d.success) {
+        msgEl.className = 'oracle-test-result success-msg';
+        msgEl.textContent = 'Excel sync settings saved.' + (autoSync ? ' Auto-sync is ON.' : '');
+        toast('Excel sync settings saved.', 'success');
+      } else {
+        msgEl.className = 'oracle-test-result error-msg';
+        msgEl.textContent = d.error || 'Save failed.';
+      }
+    } catch (e) { toast('Error saving settings.', 'error'); }
+  });
+
+  // Sync now
+  document.getElementById('syncNowBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('syncNowBtn');
+    const msgEl = document.getElementById('excelSyncMsg');
+    btn.disabled = true; btn.textContent = 'Syncing...';
+    try {
+      const res = await api('/api/shared-excel/sync', { method: 'POST' });
+      if (!res) { btn.disabled = false; btn.textContent = 'Sync Now'; return; }
+      const d = await res.json();
+      msgEl.style.display = '';
+      if (d.success) {
+        msgEl.className = 'oracle-test-result success-msg';
+        msgEl.textContent = d.message;
+        toast('Sync complete!', 'success');
+      } else {
+        msgEl.className = 'oracle-test-result error-msg';
+        msgEl.textContent = d.error || 'Sync failed.';
+        toast(d.error || 'Sync failed.', 'error');
+      }
+    } catch (e) { toast('Sync error.', 'error'); }
+    btn.disabled = false; btn.textContent = 'Sync Now';
+  });
+
+  // Import from shared excel
+  document.getElementById('importFromSharedBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('importFromSharedBtn');
+    const msgEl = document.getElementById('excelSyncMsg');
+    btn.disabled = true; btn.textContent = 'Importing...';
+    try {
+      const res = await api('/api/shared-excel/import', { method: 'POST' });
+      if (!res) { btn.disabled = false; btn.textContent = 'Import from Shared Excel'; return; }
+      const d = await res.json();
+      msgEl.style.display = '';
+      if (d.error) {
+        msgEl.className = 'oracle-test-result error-msg';
+        msgEl.textContent = d.error;
+        toast(d.error, 'error');
+      } else {
+        msgEl.className = 'oracle-test-result success-msg';
+        msgEl.textContent = `Imported ${d.imported || 0}, skipped ${d.skipped || 0}.`;
+        toast(`Imported ${d.imported || 0} records from shared Excel.`, 'success');
+        loadCorrections();
+        loadDashboard();
+      }
+    } catch (e) { toast('Import error.', 'error'); }
+    btn.disabled = false; btn.textContent = 'Import from Shared Excel';
+  });
+}
+
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 
 function openModal(id) {
@@ -1156,6 +1269,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupSorting();
   setupImportExport();
   setupGlobalSearch();
+  setupAppConfig();
 
   // Check auth on load
   checkAuth();
