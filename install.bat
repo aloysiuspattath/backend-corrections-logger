@@ -18,13 +18,12 @@ for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do set PYVER=%%v
 echo [OK] Found Python %PYVER%
 
 :: Create virtual environment if it doesn't exist
-if not exist "venv" (
+if not exist "venv\Scripts\python.exe" (
     echo.
     echo Creating virtual environment...
     python -m venv venv
     if errorlevel 1 (
         echo [ERROR] Failed to create virtual environment.
-        echo Make sure the 'venv' module is available.
         pause
         exit /b 1
     )
@@ -33,12 +32,10 @@ if not exist "venv" (
     echo [OK] Virtual environment already exists.
 )
 
-:: Activate venv and install
+:: Install using the venv's own pip directly (no activation needed)
 echo.
 echo Installing dependencies from vendor folder (offline)...
-call venv\Scripts\activate.bat
-
-pip install --no-index --find-links=vendor -r requirements.txt
+venv\Scripts\python.exe -m pip install --no-index --find-links=vendor -r requirements.txt
 if errorlevel 1 (
     echo.
     echo [ERROR] Installation failed.
@@ -50,9 +47,19 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: Verify key packages
+echo.
+echo Verifying installation...
+venv\Scripts\python.exe -c "import flask; import gevent; import openpyxl; print('[OK] All core packages verified.')"
+if errorlevel 1 (
+    echo [WARN] Some packages may not have loaded correctly.
+    pause
+    exit /b 1
+)
+
 echo.
 echo ======================================================
-echo   [OK] All dependencies installed in virtual environment!
+echo   [OK] All dependencies installed successfully!
 echo.
 echo   To start the portal, run:  start.bat
 echo ======================================================
