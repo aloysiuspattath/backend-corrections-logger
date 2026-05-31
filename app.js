@@ -1069,6 +1069,72 @@ function setupAppConfig() {
     } catch (e) { toast('Import error.', 'error'); }
     btn.disabled = false; btn.textContent = 'Import from Shared Excel';
   });
+
+  // Oracle: Test Connection
+  document.getElementById('testOracleBtn').addEventListener('click', async () => {
+    const cfg = {
+      host: document.getElementById('oracleHost').value.trim(),
+      port: parseInt(document.getElementById('oraclePort').value) || 1521,
+      service: document.getElementById('oracleService').value.trim(),
+      user: document.getElementById('oracleUser').value.trim(),
+      password: document.getElementById('oraclePass').value
+    };
+    if (!cfg.host || !cfg.service || !cfg.user) { toast('Fill in all Oracle fields.', 'error'); return; }
+    const resultEl = document.getElementById('oracleTestResult');
+    resultEl.style.display = '';
+    resultEl.textContent = 'Testing...';
+    resultEl.className = 'oracle-test-result';
+    try {
+      const res = await api('/api/db/test-oracle', { method: 'POST', body: cfg });
+      if (!res) return;
+      const d = await res.json();
+      if (d.success) {
+        resultEl.className = 'oracle-test-result success-msg';
+        resultEl.textContent = 'Connection successful! You can now migrate.';
+        document.getElementById('migrateOracleBtn').disabled = false;
+        // Save config
+        await api('/api/db/config', { method: 'POST', body: cfg });
+      } else {
+        resultEl.className = 'oracle-test-result error-msg';
+        resultEl.textContent = d.error || 'Connection failed.';
+      }
+    } catch (e) { resultEl.className = 'oracle-test-result error-msg'; resultEl.textContent = 'Test error.'; }
+  });
+
+  // Oracle: Migrate
+  document.getElementById('migrateOracleBtn').addEventListener('click', async () => {
+    if (!confirm('Migrate all data to Oracle DB? This will switch the active database.')) return;
+    const btn = document.getElementById('migrateOracleBtn');
+    btn.disabled = true; btn.textContent = 'Migrating...';
+    try {
+      const res = await api('/api/db/migrate-to-oracle', { method: 'POST' });
+      if (!res) { btn.disabled = false; btn.textContent = 'Migrate to Oracle'; return; }
+      const d = await res.json();
+      if (d.success) {
+        toast('Migration to Oracle complete!', 'success');
+        document.getElementById('dbTypeDisplay').textContent = 'Oracle';
+      } else {
+        toast(d.error || 'Migration failed.', 'error');
+      }
+    } catch (e) { toast('Migration error.', 'error'); }
+    btn.disabled = false; btn.textContent = 'Migrate to Oracle';
+  });
+
+  // CX Fetch
+  document.getElementById('cxFetchBtn').addEventListener('click', async () => {
+    const ticket = document.getElementById('ticketInput').value.trim();
+    if (!ticket) { toast('Enter a ticket number first.', 'error'); return; }
+    try {
+      const res = await api('/api/cx/ticket/' + encodeURIComponent(ticket));
+      if (!res) return;
+      const d = await res.json();
+      if (d.configured === false) {
+        toast(d.message || 'Oracle CX not configured.', 'info');
+      } else if (d.data) {
+        toast('CX data loaded!', 'success');
+      }
+    } catch (e) { toast('CX fetch error.', 'error'); }
+  });
 }
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────

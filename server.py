@@ -318,7 +318,6 @@ def import_excel():
     col_map_json = request.form.get('column_mapping', '')
     col_map = None
     if col_map_json:
-        import json
         try:
             col_map = json.loads(col_map_json)
         except:
