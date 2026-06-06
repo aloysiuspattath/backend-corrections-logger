@@ -36,12 +36,32 @@ const App = {
     document.querySelectorAll('.close-modal').forEach(btn => {
       btn.addEventListener('click', () => this.closeCorrectionModal());
     });
+    
+    // View Modal
+    document.querySelectorAll('.close-view-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('viewModal').classList.remove('active');
+      });
+    });
+
     document.getElementById('correctionForm').addEventListener('submit', this.saveCorrection.bind(this));
 
     // Filters
     document.getElementById('searchCorrections').addEventListener('input', this.debounce(() => { currentPage = 1; this.loadCorrections(); }, 500));
     document.getElementById('filterStatus').addEventListener('change', () => { currentPage = 1; this.loadCorrections(); });
     document.getElementById('exportBtn').addEventListener('click', this.exportCSV.bind(this));
+
+    // User Modal
+    document.getElementById('newUserBtn').addEventListener('click', () => {
+      document.getElementById('userForm').reset();
+      document.getElementById('userModal').classList.add('active');
+    });
+    document.querySelectorAll('.close-user-modal').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('userModal').classList.remove('active');
+      });
+    });
+    document.getElementById('userForm').addEventListener('submit', this.saveUser.bind(this));
 
     // Settings
     document.getElementById('passwordForm').addEventListener('submit', this.updatePassword.bind(this));
@@ -237,7 +257,7 @@ const App = {
     }
     
     let html = `<table class="data-table">
-      <thead><tr><th>Ticket</th><th>Executed By</th><th>Date</th><th>Status</th></tr></thead>
+      <thead><tr><th>Ticket</th><th>Executed By</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
       <tbody>`;
     data.forEach(r => {
       html += `<tr>
@@ -245,6 +265,11 @@ const App = {
         <td>${this.escapeHTML(r.executed_by)}</td>
         <td>${r.date}</td>
         <td><span class="badge ${r.status.toLowerCase().replace(' ', '-')}">${r.status}</span></td>
+        <td>
+          <button class="btn btn-icon btn-sm" onclick="App.viewCorrection(${r.id})" title="View">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </td>
       </tr>`;
     });
     html += `</tbody></table>`;
@@ -269,6 +294,9 @@ const App = {
         <td><span class="badge ${r.status.toLowerCase().replace(' ', '-')}">${r.status}</span></td>
         <td class="text-muted" style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHTML(r.notes || '-')}</td>
         <td>
+          <button class="btn btn-icon btn-sm" onclick="App.viewCorrection(${r.id})" title="View">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
           <button class="btn btn-icon btn-sm" onclick="App.editCorrection(${r.id})" title="Edit">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
           </button>
@@ -302,6 +330,28 @@ const App = {
   goToPage(p) {
     currentPage = p;
     this.loadCorrections();
+  },
+
+  async viewCorrection(id) {
+    try {
+      const res = await this.api(`/api/corrections/${id}`);
+      if (!res) return;
+      const data = await res.json();
+      
+      document.getElementById('viewTicketTitle').textContent = data.ticket || 'View Correction';
+      document.getElementById('viewDate').textContent = data.date || '-';
+      
+      const statusBadge = `<span class="badge ${data.status.toLowerCase().replace(' ', '-')}">${data.status}</span>`;
+      document.getElementById('viewStatus').innerHTML = statusBadge;
+      
+      document.getElementById('viewExecutedBy').textContent = data.executed_by || '-';
+      document.getElementById('viewQuery').textContent = data.query || '';
+      document.getElementById('viewNotes').textContent = data.notes || 'No notes provided.';
+      
+      document.getElementById('viewModal').classList.add('active');
+    } catch (err) {
+      this.toast('Failed to load correction details', 'error');
+    }
   },
 
   async editCorrection(id) {
@@ -392,7 +442,105 @@ const App = {
         body: { current_password, new_password }
       });
       this.toast('Password updated successfully', 'success');
-      document.getElementById('passwordForm').reset();
+      e.target.reset();
+    } catch (err) {
+      this.toast(err.message || 'Error updating password', 'error');
+    }
+  },
+
+  async saveUser(e) {
+    e.preventDefault();
+    const data = {
+      username: document.getElementById('addUsername').value,
+      display_name: document.getElementById('addDisplayName').value,
+      role: document.getElementById('addRole').value,
+      password: document.getElementById('addPassword').value
+    };
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (res.status === 401) { this.handleLogout(); return; }
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error);
+      
+      this.toast('User added successfully', 'success');
+      document.getElementById('userModal').classList.remove('active');
+      this.loadUsers();
+    } catch (err) {
+      this.toast(err.message || 'Error saving user', 'error');
+    }
+  },
+
+  async loadUsers() {
+    try {
+      const res = await this.api('/api/users?all=1');
+      if (!res) return;
+      const data = await res.json();
+      this.renderUsersTable(data);
+    } catch (err) {
+      this.toast('Failed to load users', 'error');
+    }
+  },
+
+  renderUsersTable(users) {
+    const container = document.getElementById('usersList');
+    if (!users || users.length === 0) {
+      container.innerHTML = '<div class="empty-state">No users found.</div>';
+      return;
+    }
+    
+    let html = `<table class="data-table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Display Name</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Source</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>`;
+      
+    users.forEach(u => {
+      const roleBadge = u.role === 'admin' ? '<span class="badge completed">Admin</span>' : '<span class="badge rolled">User</span>';
+      const statusBadge = u.active ? '<span class="badge completed">Active</span>' : '<span class="badge failed">Inactive</span>';
+      const sourceBadge = `<span class="badge pending">${u.auth_source || 'local'}</span>`;
+      const canEdit = u.username !== 'admin' && u.id !== currentUser.id;
+      
+      html += `<tr>
+        <td><strong>${this.escapeHTML(u.username)}</strong></td>
+        <td>${this.escapeHTML(u.display_name)}</td>
+        <td>${roleBadge}</td>
+        <td>${statusBadge}</td>
+        <td>${sourceBadge}</td>
+        <td>
+          ${canEdit ? `
+            <button class="btn btn-sm btn-outline" onclick="App.toggleUserStatus(${u.id}, ${u.active})">
+              ${u.active ? 'Deactivate' : 'Activate'}
+            </button>
+          ` : '<span class="text-muted" style="font-size:12px">Protected</span>'}
+        </td>
+      </tr>`;
+    });
+    
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+  },
+
+  async toggleUserStatus(id, currentStatus) {
+    if (!confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this user?`)) return;
+    try {
+      await this.api(`/api/users/${id}`, {
+        method: 'PUT',
+        body: { active: currentStatus ? 0 : 1 }
+      });
+      this.toast('User status updated', 'success');
+      this.loadUsers();
     } catch (err) {
       this.toast(err.message, 'error');
     }
