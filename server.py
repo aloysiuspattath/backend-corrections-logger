@@ -260,7 +260,9 @@ def delete_correction(cid):
 @auth.login_required
 def get_stats():
     try:
-        return jsonify(database.get_stats())
+        s = database.get_stats()
+        s['db_engine'] = 'Oracle Database' if database.is_oracle() else 'SQLite (FTS5)'
+        return jsonify(s)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

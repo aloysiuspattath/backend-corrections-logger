@@ -446,6 +446,10 @@ async function loadDashboard() {
     const res = await api('/api/stats');
     if (!res) return;
     const s = await res.json();
+    if (s.db_engine) {
+      const dbTypeEl = document.getElementById('dbTypeDisplay');
+      if (dbTypeEl) dbTypeEl.textContent = s.db_engine;
+    }
     animateCount('statTotal', s.total);
     animateCount('statToday', s.today);
     animateCount('statWeek', s.week);
