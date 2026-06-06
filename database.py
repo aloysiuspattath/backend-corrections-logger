@@ -55,10 +55,12 @@ def init_tables():
             CREATE TABLE bcp_users (
                 id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
                 username VARCHAR2(50) NOT NULL UNIQUE,
-                password_hash VARCHAR2(255) NOT NULL,
+                password_hash VARCHAR2(255),
                 display_name VARCHAR2(100) NOT NULL,
                 role VARCHAR2(20) DEFAULT 'user' NOT NULL,
                 active NUMBER(1) DEFAULT 1 NOT NULL,
+                is_external NUMBER(1) DEFAULT 0 NOT NULL,
+                auth_source VARCHAR2(50) DEFAULT 'local',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -71,6 +73,15 @@ def init_tables():
             VALUES (:1, :2, :3, :4)
         """, ('admin', pw, 'Administrator', 'admin'))
         conn.commit()
+    else:
+        # Patch existing table if it doesn't have the new columns
+        try:
+            cursor.execute("ALTER TABLE bcp_users ADD (is_external NUMBER(1) DEFAULT 0 NOT NULL)")
+            cursor.execute("ALTER TABLE bcp_users ADD (auth_source VARCHAR2(50) DEFAULT 'local')")
+            # Make password nullable for external users
+            cursor.execute("ALTER TABLE bcp_users MODIFY (password_hash NULL)")
+        except oracledb.DatabaseError as e:
+            pass # Columns likely already exist
 
     # Check if bcp_corrections exists
     cursor.execute("SELECT count(*) FROM user_tables WHERE table_name = 'BCP_CORRECTIONS'")

@@ -51,6 +51,8 @@ def get_me():
 @app.route('/api/auth/password', methods=['PUT'])
 @auth.login_required
 def change_password():
+    if request.current_user.get('is_external'):
+        return jsonify({'error': 'Password must be changed through your Active Directory or External system.'}), 403
     data = request.json or {}
     success, msg = auth.update_password(
         request.current_user['id'],

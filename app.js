@@ -22,6 +22,8 @@ const App = {
     document.getElementById('loginForm').addEventListener('submit', this.handleLogin.bind(this));
     document.getElementById('logoutBtn').addEventListener('click', this.handleLogout.bind(this));
     
+    document.getElementById('themeToggleBtn').addEventListener('click', this.toggleTheme.bind(this));
+    
     document.querySelectorAll('.nav-link').forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -130,6 +132,12 @@ const App = {
     if (isAdmin) {
       document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
     }
+    
+    if (user.is_external) {
+      document.getElementById('passwordSection').style.display = 'none';
+    } else {
+      document.getElementById('passwordSection').style.display = 'block';
+    }
 
     this.initSocket();
     this.switchView('dashboard');
@@ -138,6 +146,17 @@ const App = {
   showLoginScreen() {
     document.getElementById('appWrapper').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
+  },
+
+  toggleTheme() {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    document.querySelector('.sun-icon').style.display = isLight ? 'block' : 'none';
+    document.querySelector('.moon-icon').style.display = isLight ? 'none' : 'block';
+    if (activityChart) {
+      // Refresh chart to match theme colors
+      activityChart.update();
+    }
   },
 
   switchView(viewName) {

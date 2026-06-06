@@ -17,31 +17,129 @@ def verify_password(password, stored_hash):
     except Exception:
         return False
 
-def authenticate_user(username, password):
+def sync_external_user(username, display_name, source):
     import database
     conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute('''SELECT id, username, display_name, role, active, password_hash 
-                      FROM bcp_users WHERE LOWER(username) = LOWER(:u)''', {'u': username})
-    cols = [d[0].lower() for d in cursor.description]
+    
+    # Check if exists
+    cursor.execute('SELECT id, role, active FROM bcp_users WHERE LOWER(username) = LOWER(:u)', {'u': username})
     row = cursor.fetchone()
+    
+    if row:
+        # Existing user
+        uid, role, active = row
+        if not active:
+            cursor.close(); database.release_connection(conn)
+            return None, 'Account is deactivated. Contact an administrator.'
+        # Ensure it's marked as external
+        cursor.execute('UPDATE bcp_users SET is_external=1, auth_source=:s, updated_at=CURRENT_TIMESTAMP WHERE id=:id', {'s': source, 'id': uid})
+        conn.commit()
+    else:
+        # New external user
+        role = 'user'
+        new_id = cursor.var(int)
+        cursor.execute('''INSERT INTO bcp_users(username, display_name, role, is_external, auth_source)
+                          VALUES(:u, :d, :r, 1, :s) RETURNING id INTO :nid''',
+                       {'u': username, 'd': display_name, 'r': role, 's': source, 'nid': new_id})
+        conn.commit()
+        uid = new_id.getvalue()[0]
+        
+    cursor.close()
+    database.release_connection(conn)
+    return {
+        'id': uid,
+        'username': username,
+        'display_name': display_name,
+        'role': role,
+        'is_external': True
+    }, None
+
+def auth_ad(username, password, config):
+    try:
+        from ldap3 import Server, Connection, ALL
+        server = Server(config.get('server'), get_info=ALL)
+        user_principal = f"{config.get('domain', '')}{username}"
+        conn = Connection(server, user=user_principal, password=password, auto_bind=True)
+        # Authentication successful
+        conn.unbind()
+        return True, None
+    except Exception as e:
+        return False, str(e)
+
+def auth_external_oracle(username, password, config):
+    import database
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    table = config.get('table_name')
+    u_col = config.get('username_col')
+    p_col = config.get('password_col')
+    algo = config.get('hash_algo', 'md5').lower()
+    
+    try:
+        cursor.execute(f"SELECT {p_col} FROM {table} WHERE LOWER({u_col}) = LOWER(:u)", {'u': username})
+        row = cursor.fetchone()
+        if not row:
+            return False, 'User not found in external table.'
+        
+        stored_hash = row[0]
+        # Basic hash verification placeholder (since user didn't specify algorithm yet)
+        if algo == 'md5':
+            import hashlib
+            test_hash = hashlib.md5(password.encode()).hexdigest()
+        else:
+            # Fallback to plain text if unknown
+            test_hash = password
+            
+        return (test_hash == stored_hash), None
+    except Exception as e:
+        return False, str(e)
+    finally:
+        cursor.close()
+        database.release_connection(conn)
+
+def authenticate_user(username, password):
+    import database
+    
+    # 1. Check Local Superadmin
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''SELECT id, username, display_name, role, active, password_hash, is_external 
+                      FROM bcp_users WHERE LOWER(username) = LOWER(:u) AND is_external = 0''', {'u': username})
+    cols = [d[0].lower() for d in cursor.description]
+    local_row = cursor.fetchone()
     cursor.close()
     database.release_connection(conn)
 
-    if not row:
-        return None, 'Invalid username or password.'
-    r = dict(zip(cols, row))
-    if not r['active']:
-        return None, 'Account is deactivated. Contact an administrator.'
-    if not verify_password(password, r['password_hash']):
-        return None, 'Invalid username or password.'
+    if local_row:
+        r = dict(zip(cols, local_row))
+        if not r['active']:
+            return None, 'Account is deactivated. Contact an administrator.'
+        if verify_password(password, r['password_hash']):
+            return {
+                'id': r['id'],
+                'username': r['username'],
+                'display_name': r['display_name'],
+                'role': r['role'],
+                'is_external': False
+            }, None
 
-    return {
-        'id': r['id'],
-        'username': r['username'],
-        'display_name': r['display_name'],
-        'role': r['role'],
-    }, None
+    # 2. Try External Sources (Cascading)
+    config = database.get_config().get('auth', {})
+    
+    ad_cfg = config.get('ad', {})
+    if ad_cfg.get('enabled'):
+        success, _ = auth_ad(username, password, ad_cfg)
+        if success:
+            return sync_external_user(username, f"{username} (AD)", 'ad')
+            
+    ext_cfg = config.get('external_oracle', {})
+    if ext_cfg.get('enabled'):
+        success, _ = auth_external_oracle(username, password, ext_cfg)
+        if success:
+            return sync_external_user(username, f"{username} (Ext)", 'external_oracle')
+
+    return None, 'Invalid username or password.'
 
 def get_current_user():
     user_id = session.get('user_id')
@@ -50,7 +148,7 @@ def get_current_user():
     import database
     conn = database.get_connection()
     cursor = conn.cursor()
-    cursor.execute('''SELECT id, username, display_name, role, active 
+    cursor.execute('''SELECT id, username, display_name, role, active, is_external 
                       FROM bcp_users WHERE id = :id AND active = 1''', {'id': user_id})
     cols = [d[0].lower() for d in cursor.description]
     row = cursor.fetchone()
@@ -65,6 +163,7 @@ def get_current_user():
         'username': r['username'],
         'display_name': r['display_name'],
         'role': r['role'],
+        'is_external': bool(r['is_external'])
     }
 
 def login_required(f):
