@@ -203,18 +203,10 @@ def add_correction():
 @auth.login_required
 def get_one(cid):
     try:
-        conn = database.get_sqlite_conn() if not database.is_oracle() else None
-        if conn:
-            import sqlite3
-            conn.row_factory = sqlite3.Row
-            c = conn.cursor()
-            c.execute('SELECT * FROM corrections WHERE id=?', (cid,))
-            row = c.fetchone()
-            conn.close()
-            if not row:
-                return jsonify({'error': 'Not found'}), 404
-            return jsonify(dict(row))
-        return jsonify({'error': 'Not supported'}), 500
+        row = database.get_correction(cid)
+        if not row:
+            return jsonify({'error': 'Not found'}), 404
+        return jsonify(row)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

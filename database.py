@@ -300,6 +300,27 @@ def _get_corrections_oracle(search, executed_by, date_from, date_to, status, pag
     conn.close()
     return rows, total
 
+def get_correction(cid):
+    if is_oracle():
+        conn = get_oracle_conn()
+        cursor = conn.cursor()
+        cursor.execute('''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS "date",
+                                 status,notes,TO_CHAR(created_at,'YYYY-MM-DD HH24:MI:SS') AS created_at
+                          FROM corrections WHERE id=:id''', {'id': cid})
+        cols = [d[0].lower() for d in cursor.description]
+        row = cursor.fetchone()
+        conn.close()
+        return dict(zip(cols, row)) if row else None
+    else:
+        conn = get_sqlite_conn()
+        import sqlite3
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute('SELECT * FROM corrections WHERE id=?', (cid,))
+        row = c.fetchone()
+        conn.close()
+        return dict(row) if row else None
+
 # ─── CORRECTIONS: ADD ──────────────────────────────────────────────────────────
 
 def add_correction(data):
