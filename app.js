@@ -1076,6 +1076,7 @@ function setupAppConfig() {
       host: document.getElementById('oracleHost').value.trim(),
       port: parseInt(document.getElementById('oraclePort').value) || 1521,
       service: document.getElementById('oracleService').value.trim(),
+      service_type: document.getElementById('oracleServiceType').value,
       user: document.getElementById('oracleUser').value.trim(),
       password: document.getElementById('oraclePass').value
     };

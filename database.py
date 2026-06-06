@@ -13,7 +13,7 @@ DEFAULT_CONFIG = {
     "db_type": "sqlite",
     "sqlite": {"path": "corrections.db"},
     "oracle": {
-        "host": "", "port": 1521, "service_name": "",
+        "host": "", "port": 1521, "service_name": "", "service_type": "service_name",
         "username": "", "password": "", "schema": ""
     }
 }
@@ -59,10 +59,14 @@ def get_oracle_conn():
     config = get_config()
     cfg = config['oracle']
     import oracledb
+    if cfg.get('service_type') == 'sid':
+        dsn = oracledb.makedsn(cfg['host'], cfg['port'], sid=cfg['service_name'])
+    else:
+        dsn = oracledb.makedsn(cfg['host'], cfg['port'], service_name=cfg['service_name'])
     return oracledb.connect(
         user=cfg['username'],
         password=cfg['password'],
-        dsn=f"{cfg['host']}:{cfg['port']}/{cfg['service_name']}"
+        dsn=dsn
     )
 
 # ─── INIT ──────────────────────────────────────────────────────────────────────
@@ -579,10 +583,14 @@ def get_tickets_set():
 def test_oracle_connection(oracle_cfg):
     try:
         import oracledb
+        if oracle_cfg.get('service_type') == 'sid':
+            dsn = oracledb.makedsn(oracle_cfg.get('host'), oracle_cfg.get('port', 1521), sid=oracle_cfg.get('service_name'))
+        else:
+            dsn = oracledb.makedsn(oracle_cfg.get('host'), oracle_cfg.get('port', 1521), service_name=oracle_cfg.get('service_name'))
         conn = oracledb.connect(
             user=oracle_cfg.get('username'),
             password=oracle_cfg.get('password'),
-            dsn=f"{oracle_cfg.get('host')}:{oracle_cfg.get('port', 1521)}/{oracle_cfg.get('service_name')}"
+            dsn=dsn
         )
         cursor = conn.cursor()
         cursor.execute('SELECT 1 FROM DUAL')
