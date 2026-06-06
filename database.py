@@ -59,6 +59,7 @@ def get_oracle_conn():
     config = get_config()
     cfg = config['oracle']
     import oracledb
+    oracledb.defaults.fetch_lobs = False
     if cfg.get('service_type') == 'sid':
         dsn = oracledb.makedsn(cfg['host'], cfg['port'], sid=cfg['service_name'])
     else:
@@ -285,7 +286,7 @@ def _get_corrections_oracle(search, executed_by, date_from, date_to, status, pag
     sql = f'''SELECT * FROM (
                 SELECT c.*, ROWNUM rnum FROM (
                     SELECT id, ticket, query, executed_by,
-                           TO_CHAR(date_val,'YYYY-MM-DD') AS date, status, notes,
+                           TO_CHAR(date_val,'YYYY-MM-DD') AS "date", status, notes,
                            TO_CHAR(created_at,'YYYY-MM-DD HH24:MI:SS') AS created_at,
                            TO_CHAR(updated_at,'YYYY-MM-DD HH24:MI:SS') AS updated_at
                     FROM corrections WHERE {where}
@@ -334,7 +335,7 @@ def _add_oracle(data):
                     's': data.get('status','Completed'), 'n': data.get('notes',''), 'nid': new_id})
     conn.commit()
     rid = new_id.getvalue()[0]
-    cursor.execute('''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS date,
+    cursor.execute('''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS "date",
                              status,notes,TO_CHAR(created_at,'YYYY-MM-DD HH24:MI:SS') AS created_at
                       FROM corrections WHERE id=:id''', {'id': rid})
     cols = [d[0].lower() for d in cursor.description]
@@ -378,7 +379,7 @@ def _update_oracle(cid, data):
     conn.commit()
     if cursor.rowcount == 0:
         conn.close(); return None
-    cursor.execute('''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS date,
+    cursor.execute('''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS "date",
                              status,notes FROM corrections WHERE id=:id''', {'id': cid})
     cols = [d[0].lower() for d in cursor.description]
     row = dict(zip(cols, cursor.fetchone()))
@@ -477,7 +478,7 @@ def full_text_search(query, limit=100, executed_by='', status='', date_from='', 
             conditions.append("date_val <= TO_DATE(:dt,'YYYY-MM-DD')")
             params['dt'] = date_to
         where = ' AND '.join(conditions)
-        cursor.execute(f'''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS date,
+        cursor.execute(f'''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS "date",
                                  status,notes,TO_CHAR(created_at,'YYYY-MM-DD HH24:MI:SS') AS created_at
                           FROM corrections
                           WHERE {where}
@@ -529,7 +530,7 @@ def get_all_for_export():
     if is_oracle():
         conn = get_oracle_conn()
         cursor = conn.cursor()
-        cursor.execute('''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS date,
+        cursor.execute('''SELECT id,ticket,query,executed_by,TO_CHAR(date_val,'YYYY-MM-DD') AS "date",
                                  status,notes,TO_CHAR(created_at,'YYYY-MM-DD HH24:MI:SS') AS created_at
                           FROM corrections ORDER BY date_val DESC, id DESC''')
         cols = [d[0].lower() for d in cursor.description]
