@@ -1,16 +1,7 @@
-"""
-auth.py — Authentication & User Management
-Session-based auth with admin/user roles
-"""
 import hashlib
 import secrets
-import sqlite3
-import os
-from datetime import datetime
 from functools import wraps
 from flask import request, jsonify, session
-
-# ─── PASSWORD HASHING ──────────────────────────────────────────────────────────
 
 def hash_password(password, salt=None):
     if salt is None:
@@ -26,90 +17,62 @@ def verify_password(password, stored_hash):
     except Exception:
         return False
 
-# ─── DB HELPERS ────────────────────────────────────────────────────────────────
-
-def _get_conn():
+def authenticate_user(username, password):
     import database
-    return database.get_sqlite_conn()
-
-def init_users_table():
-    conn = _get_conn()
-    conn.executescript('''
-        CREATE TABLE IF NOT EXISTS users (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
-            username     TEXT NOT NULL UNIQUE COLLATE NOCASE,
-            password_hash TEXT NOT NULL,
-            display_name TEXT NOT NULL,
-            role         TEXT NOT NULL DEFAULT 'user',
-            active       INTEGER NOT NULL DEFAULT 1,
-            created_at   TEXT DEFAULT (datetime('now','localtime')),
-            updated_at   TEXT DEFAULT (datetime('now','localtime'))
-        );
-    ''')
-    conn.commit()
-
-    # Create default admin if no users exist
-    c = conn.cursor()
-    c.execute('SELECT COUNT(*) FROM users')
-    if c.fetchone()[0] == 0:
-        pw = hash_password('admin123')
-        c.execute('''INSERT INTO users(username, password_hash, display_name, role)
-                     VALUES(?, ?, ?, ?)''', ('admin', pw, 'Administrator', 'admin'))
-        conn.commit()
-        print('[Auth] Default admin user created: admin / admin123')
-
-    conn.close()
-
-# ─── AUTH FUNCTIONS ────────────────────────────────────────────────────────────
-
-def authenticate(username, password):
-    conn = _get_conn()
-    c = conn.cursor()
-    c.execute('SELECT id, username, password_hash, display_name, role, active FROM users WHERE username=?',
-              (username.strip(),))
-    row = c.fetchone()
-    conn.close()
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''SELECT id, username, display_name, role, active, password_hash 
+                      FROM bcp_users WHERE LOWER(username) = LOWER(:u)''', {'u': username})
+    cols = [d[0].lower() for d in cursor.description]
+    row = cursor.fetchone()
+    cursor.close()
+    database.release_connection(conn)
 
     if not row:
         return None, 'Invalid username or password.'
-    if not row['active']:
+    r = dict(zip(cols, row))
+    if not r['active']:
         return None, 'Account is deactivated. Contact an administrator.'
-    if not verify_password(password, row['password_hash']):
+    if not verify_password(password, r['password_hash']):
         return None, 'Invalid username or password.'
 
     return {
-        'id': row['id'],
-        'username': row['username'],
-        'display_name': row['display_name'],
-        'role': row['role'],
+        'id': r['id'],
+        'username': r['username'],
+        'display_name': r['display_name'],
+        'role': r['role'],
     }, None
 
 def get_current_user():
     user_id = session.get('user_id')
     if not user_id:
         return None
-    conn = _get_conn()
-    c = conn.cursor()
-    c.execute('SELECT id, username, display_name, role, active FROM users WHERE id=? AND active=1', (user_id,))
-    row = c.fetchone()
-    conn.close()
+    import database
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''SELECT id, username, display_name, role, active 
+                      FROM bcp_users WHERE id = :id AND active = 1''', {'id': user_id})
+    cols = [d[0].lower() for d in cursor.description]
+    row = cursor.fetchone()
+    cursor.close()
+    database.release_connection(conn)
+    
     if not row:
         return None
+    r = dict(zip(cols, row))
     return {
-        'id': row['id'],
-        'username': row['username'],
-        'display_name': row['display_name'],
-        'role': row['role'],
+        'id': r['id'],
+        'username': r['username'],
+        'display_name': r['display_name'],
+        'role': r['role'],
     }
-
-# ─── DECORATORS ────────────────────────────────────────────────────────────────
 
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         user = get_current_user()
         if not user:
-            return jsonify({'error': 'Authentication required', 'auth_required': True}), 401
+            return jsonify({'auth_required': True}), 401
         request.current_user = user
         return f(*args, **kwargs)
     return decorated
@@ -118,136 +81,114 @@ def admin_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         user = get_current_user()
-        if not user:
-            return jsonify({'error': 'Authentication required', 'auth_required': True}), 401
-        if user['role'] != 'admin':
-            return jsonify({'error': 'Admin access required'}), 403
+        if not user or user.get('role') != 'admin':
+            return jsonify({'error': 'Unauthorized. Admins only.'}), 403
         request.current_user = user
         return f(*args, **kwargs)
     return decorated
 
-# ─── USER CRUD ─────────────────────────────────────────────────────────────────
-
 def get_all_users(include_inactive=False):
-    conn = _get_conn()
-    c = conn.cursor()
-    if include_inactive:
-        c.execute('SELECT id, username, display_name, role, active, created_at FROM users ORDER BY display_name')
-    else:
-        c.execute('SELECT id, username, display_name, role, active, created_at FROM users WHERE active=1 ORDER BY display_name')
-    rows = [dict(r) for r in c.fetchall()]
-    conn.close()
+    import database
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    sql = 'SELECT id, username, display_name, role, active FROM bcp_users'
+    if not include_inactive:
+        sql += ' WHERE active=1'
+    cursor.execute(sql)
+    cols = [d[0].lower() for d in cursor.description]
+    rows = [dict(zip(cols, r)) for r in cursor.fetchall()]
+    cursor.close()
+    database.release_connection(conn)
     return rows
 
-def get_user_by_id(uid):
-    conn = _get_conn()
-    c = conn.cursor()
-    c.execute('SELECT id, username, display_name, role, active, created_at FROM users WHERE id=?', (uid,))
-    row = c.fetchone()
-    conn.close()
-    return dict(row) if row else None
-
 def create_user(username, password, display_name, role='user'):
-    username = username.strip().lower()
-    display_name = display_name.strip()
-    if not username or not password or not display_name:
-        return None, 'Username, password, and display name are required.'
-    if len(password) < 4:
-        return None, 'Password must be at least 4 characters.'
-    if role not in ('admin', 'user'):
-        role = 'user'
+    import database
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    # Check if exists
+    cursor.execute('SELECT COUNT(*) FROM bcp_users WHERE LOWER(username) = LOWER(:u)', {'u': username})
+    if cursor.fetchone()[0] > 0:
+        cursor.close(); database.release_connection(conn)
+        return None, 'Username already exists.'
 
-    conn = _get_conn()
-    c = conn.cursor()
-    # Check if username exists
-    c.execute('SELECT id FROM users WHERE username=?', (username,))
-    if c.fetchone():
-        conn.close()
-        return None, f'Username "{username}" already exists.'
-
-    pw_hash = hash_password(password)
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    c.execute('''INSERT INTO users(username, password_hash, display_name, role, active, created_at, updated_at)
-                 VALUES(?, ?, ?, ?, 1, ?, ?)''', (username, pw_hash, display_name, role, now, now))
+    pw = hash_password(password)
+    new_id = cursor.var(int)
+    cursor.execute('''INSERT INTO bcp_users(username, password_hash, display_name, role)
+                      VALUES(:u, :p, :d, :r) RETURNING id INTO :nid''',
+                   {'u': username, 'p': pw, 'd': display_name, 'r': role, 'nid': new_id})
     conn.commit()
-    new_id = c.lastrowid
-    conn.close()
-    return get_user_by_id(new_id), None
+    uid = new_id.getvalue()[0]
+    cursor.close()
+    database.release_connection(conn)
+    return {'id': uid, 'username': username, 'display_name': display_name, 'role': role}, None
 
 def update_user(uid, data):
-    conn = _get_conn()
-    c = conn.cursor()
-    c.execute('SELECT id, username, role FROM users WHERE id=?', (uid,))
-    existing = c.fetchone()
-    if not existing:
-        conn.close()
+    import database
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    fields = []
+    params = {'id': uid}
+    if 'display_name' in data and data['display_name'].strip():
+        fields.append('display_name = :d')
+        params['d'] = data['display_name'].strip()
+    if 'role' in data and data['role'] in ['admin','user']:
+        fields.append('role = :r')
+        params['r'] = data['role']
+    if 'active' in data:
+        fields.append('active = :a')
+        params['a'] = 1 if data['active'] else 0
+    if 'password' in data and data['password']:
+        fields.append('password_hash = :p')
+        params['p'] = hash_password(data['password'])
+        
+    if not fields:
+        cursor.close(); database.release_connection(conn)
+        return None, 'No valid fields provided.'
+
+    fields.append('updated_at = CURRENT_TIMESTAMP')
+    sql = f"UPDATE bcp_users SET {', '.join(fields)} WHERE id = :id"
+    cursor.execute(sql, params)
+    conn.commit()
+    affected = cursor.rowcount
+    cursor.close()
+    database.release_connection(conn)
+
+    if affected == 0:
         return None, 'User not found.'
 
-    display_name = data.get('display_name', '').strip()
-    role = data.get('role', existing['role'])
-    active = data.get('active', 1)
-
-    if role not in ('admin', 'user'):
-        role = 'user'
-
-    # Prevent deactivating the last admin
-    if existing['role'] == 'admin' and (role != 'admin' or not active):
-        c.execute("SELECT COUNT(*) FROM users WHERE role='admin' AND active=1 AND id != ?", (uid,))
-        if c.fetchone()[0] == 0:
-            conn.close()
-            return None, 'Cannot deactivate or demote the last active admin.'
-
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    c.execute('''UPDATE users SET display_name=?, role=?, active=?, updated_at=? WHERE id=?''',
-              (display_name, role, int(active), now, uid))
-    conn.commit()
-    conn.close()
+    # Fetch updated user
     return get_user_by_id(uid), None
 
-def reset_password(uid, new_password):
-    if not new_password or len(new_password) < 4:
-        return False, 'Password must be at least 4 characters.'
-    conn = _get_conn()
-    c = conn.cursor()
-    c.execute('SELECT id FROM users WHERE id=?', (uid,))
-    if not c.fetchone():
-        conn.close()
-        return False, 'User not found.'
-    pw_hash = hash_password(new_password)
-    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    c.execute('UPDATE users SET password_hash=?, updated_at=? WHERE id=?', (pw_hash, now, uid))
-    conn.commit()
-    conn.close()
-    return True, 'Password updated.'
-
-def change_own_password(uid, current_password, new_password):
-    if not new_password or len(new_password) < 4:
-        return False, 'New password must be at least 4 characters.'
-    conn = _get_conn()
-    c = conn.cursor()
-    c.execute('SELECT password_hash FROM users WHERE id=?', (uid,))
-    row = c.fetchone()
-    conn.close()
+def get_user_by_id(uid):
+    import database
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, username, display_name, role, active FROM bcp_users WHERE id = :id', {'id': uid})
+    cols = [d[0].lower() for d in cursor.description]
+    row = cursor.fetchone()
+    cursor.close()
+    database.release_connection(conn)
     if not row:
-        return False, 'User not found.'
-    if not verify_password(current_password, row['password_hash']):
-        return False, 'Current password is incorrect.'
-    return reset_password(uid, new_password)
+        return None
+    return dict(zip(cols, row))
 
-def delete_user(uid):
-    conn = _get_conn()
-    c = conn.cursor()
-    c.execute('SELECT role FROM users WHERE id=?', (uid,))
-    row = c.fetchone()
+def update_password(uid, current_pw, new_pw):
+    import database
+    conn = database.get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT password_hash FROM bcp_users WHERE id = :id', {'id': uid})
+    row = cursor.fetchone()
     if not row:
-        conn.close()
+        cursor.close(); database.release_connection(conn)
         return False, 'User not found.'
-    if row['role'] == 'admin':
-        c.execute("SELECT COUNT(*) FROM users WHERE role='admin' AND active=1 AND id != ?", (uid,))
-        if c.fetchone()[0] == 0:
-            conn.close()
-            return False, 'Cannot delete the last admin.'
-    c.execute('DELETE FROM users WHERE id=?', (uid,))
+
+    if not verify_password(current_pw, row[0]):
+        cursor.close(); database.release_connection(conn)
+        return False, 'Incorrect current password.'
+
+    cursor.execute('UPDATE bcp_users SET password_hash = :p, updated_at = CURRENT_TIMESTAMP WHERE id = :id',
+                   {'p': hash_password(new_pw), 'id': uid})
     conn.commit()
-    conn.close()
-    return True, None
+    cursor.close()
+    database.release_connection(conn)
+    return True, 'Password updated successfully.'

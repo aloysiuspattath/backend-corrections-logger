@@ -3,534 +3,284 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Backend Corrections Portal | Bank Operations</title>
-  <meta name="description" content="Internal portal for tracking and managing backend corrections, queries, and service tickets." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <title>Backend Corrections Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  
+  <!-- BACKGROUND ANIMATIONS -->
+  <div class="bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
 
-  <!-- ══════════════════════════════════════ LOGIN SCREEN ═════════════════════ -->
+  <!-- LOGIN SCREEN -->
   <div class="login-screen" id="loginScreen">
-    <div class="login-bg"></div>
-    <div class="login-card">
+    <div class="glass-card login-card">
       <div class="login-logo">
-        <div class="login-logo-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2"/>
-            <path d="M8 21h8M12 17v4"/><path d="M7 8h2M11 8h6M7 11h4M13 11h4"/>
-          </svg>
-        </div>
-        <h1>Backend Corrections Portal</h1>
-        <p>Sign in to continue</p>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5"></path>
+          <path d="M2 12l10 5 10-5"></path>
+        </svg>
+        <h1>Portal Login</h1>
+        <p>Authenticate to access backend records.</p>
       </div>
       <form id="loginForm" novalidate>
-        <div class="login-field">
-          <label for="loginUsername">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Username
-          </label>
-          <input type="text" id="loginUsername" placeholder="Enter your username" autocomplete="username" required autofocus />
+        <div class="input-group">
+          <label for="loginUsername">Username</label>
+          <input type="text" id="loginUsername" placeholder="Enter username" required autofocus />
         </div>
-        <div class="login-field">
-          <label for="loginPassword">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Password
-          </label>
-          <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password" required />
+        <div class="input-group">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter password" required />
         </div>
         <div class="login-error" id="loginError" style="display:none"></div>
-        <button type="submit" class="btn btn-primary login-submit" id="loginBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-          Sign In
-        </button>
+        <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Sign In</button>
       </form>
-      <div class="login-footer">Secured access &mdash; Contact admin for account creation</div>
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════ APP WRAPPER ══════════════════════ -->
+  <!-- MAIN APP -->
   <div class="app-wrapper" id="appWrapper" style="display:none">
-
-  <!-- ══════════════════════════════════════ SIDEBAR ══════════════════════════ -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <div class="logo-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="3" width="20" height="14" rx="2"/>
-            <path d="M8 21h8M12 17v4"/><path d="M7 8h2M11 8h6M7 11h4M13 11h4"/>
+    
+    <!-- SIDEBAR -->
+    <aside class="sidebar glass-panel">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+            <path d="M2 17l10 5 10-5"></path>
+            <path d="M2 12l10 5 10-5"></path>
           </svg>
-        </div>
-        <div class="logo-text">
-          <span class="logo-title">BCP</span>
-          <span class="logo-sub">Backend Portal</span>
+          BCP
         </div>
       </div>
-      <button class="sidebar-toggle-btn" id="sidebarToggle" title="Toggle sidebar">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-      </button>
-    </div>
-
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Main</div>
-      <a href="#" class="nav-item active" data-view="dashboard" id="nav-dashboard">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-        </svg>
-        <span>Dashboard</span>
-      </a>
-      <a href="#" class="nav-item" data-view="corrections" id="nav-corrections">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-        </svg>
-        <span>All Corrections</span>
-      </a>
-      <a href="#" class="nav-item" data-view="add" id="nav-add">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-        </svg>
-        <span>New Correction</span>
-      </a>
-      <a href="#" class="nav-item" data-view="search" id="nav-search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        <span>Search</span>
-      </a>
-
-      <div class="nav-section-label">Data</div>
-      <a href="#" class="nav-item admin-only" data-view="import-export" id="nav-import-export">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="8 17 12 21 16 17"/>
-          <line x1="12" y1="12" x2="12" y2="21"/>
-          <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/>
-        </svg>
-        <span>Import / Export</span>
-      </a>
-      <a href="#" class="nav-item admin-only" data-view="backups" id="nav-backups">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        </svg>
-        <span>Backups</span>
-      </a>
-
-      <div class="nav-section-label">System</div>
-      <a href="#" class="nav-item admin-only" data-view="settings" id="nav-settings">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </svg>
-        <span>Settings</span>
-      </a>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="sidebar-footer-top">
-        <div class="live-dot" id="liveDot" title="Connected">
-          <span class="dot-pulse"></span>
-          <span class="live-label">Live</span>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-link active" data-view="dashboard">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Dashboard
+        </a>
+        <a href="#" class="nav-link" data-view="corrections">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Corrections
+        </a>
+        <a href="#" class="nav-link admin-only" data-view="users" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Users
+        </a>
+        <a href="#" class="nav-link" data-view="settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Settings
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="avatar" id="userAvatar">A</div>
+          <div class="details">
+            <span id="userName">Admin</span>
+            <span class="role" id="userRole">Administrator</span>
+          </div>
         </div>
-        <div class="online-badge" id="onlineBadge" title="Users online">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span id="onlineCount">1</span> online
-        </div>
-      </div>
-      <button class="logout-btn" id="logoutBtn" title="Sign out">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-        <span>Sign Out</span>
-      </button>
-    </div>
-  </aside>
-
-  <!-- ══════════════════════════════════════ MAIN ════════════════════════════ -->
-  <main class="main-content" id="mainContent">
-
-    <!-- Top Bar -->
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="mobile-menu-btn" id="mobileMenuBtn">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
+        <button class="btn btn-icon" id="logoutBtn" title="Logout">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
         </button>
-        <h1 class="page-title" id="pageTitle">Dashboard</h1>
       </div>
-      <div class="topbar-right">
-        <div class="search-global">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-          </svg>
-          <input type="text" id="globalSearch" placeholder="Search anything..." />
-        </div>
-        <button class="btn btn-primary" id="quickAddBtn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          New Entry
-        </button>
-        <div class="topbar-user" id="topbarUser">
-          <div class="user-avatar-sm" id="topbarAvatar">U</div>
-          <span id="topbarUsername">User</span>
-          <span class="role-badge" id="topbarRole">user</span>
-        </div>
-        <div class="topbar-date" id="topbarDate"></div>
-      </div>
-    </header>
+    </aside>
 
-    <!-- Views -->
-    <div class="view-container">
-
-      <!-- ════════════════════ DASHBOARD ════════════════════ -->
-      <section class="view active" id="view-dashboard">
-        <div class="stats-row">
-          <div class="stat-card"><div class="stat-icon total"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="stat-info"><span class="stat-value" id="statTotal">--</span><span class="stat-label">Total Corrections</span></div></div>
-          <div class="stat-card"><div class="stat-icon today"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><span class="stat-value" id="statToday">--</span><span class="stat-label">Today</span></div></div>
-          <div class="stat-card"><div class="stat-icon week"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="stat-info"><span class="stat-value" id="statWeek">--</span><span class="stat-label">This Week</span></div></div>
-          <div class="stat-card"><div class="stat-icon month"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="stat-info"><span class="stat-value" id="statMonth">--</span><span class="stat-label">This Month</span></div></div>
-        </div>
-        <div class="dashboard-bottom">
-          <div class="recent-card"><div class="card-header"><h3>Recent Corrections</h3><button class="btn btn-ghost btn-sm" onclick="switchView('corrections')">View All</button></div><div class="recent-list" id="recentList"><div class="empty-state-mini">Loading...</div></div></div>
-          <div class="activity-card"><div class="card-header"><h3>Daily Activity - Last 14 Days</h3></div><div class="bar-chart-container" id="chartContainer"><canvas id="activityChart" width="500" height="200"></canvas></div></div>
-        </div>
-      </section>
-
-      <!-- ════════════════════ ALL CORRECTIONS ════════════════════ -->
-      <section class="view" id="view-corrections">
-        <div class="toolbar">
-          <div class="toolbar-left">
-            <div class="search-box">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="tableSearch" placeholder="Search tickets or queries..." />
-            </div>
-            <select id="filterExecuted" class="filter-select"><option value="">All Executors</option></select>
-            <select id="filterStatus" class="filter-select">
-              <option value="">All Statuses</option>
-              <option value="Completed">Completed</option>
-              <option value="Pending Verification">Pending Verification</option>
-              <option value="Rolled Back">Rolled Back</option>
-              <option value="Failed">Failed</option>
-            </select>
-            <div class="date-filter">
-              <input type="date" id="filterDateFrom" title="From" />
-              <span class="date-sep">-</span>
-              <input type="date" id="filterDateTo" title="To" />
-            </div>
-            <button class="btn btn-ghost btn-sm" id="clearFilters">Clear</button>
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      
+      <!-- TOPBAR -->
+      <header class="topbar glass-panel">
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+        <div class="topbar-actions">
+          <div class="connection-status">
+            <span class="pulse" id="livePulse"></span>
+            <span id="liveText">Connecting...</span>
           </div>
-          <div class="toolbar-right">
-            <span class="record-count" id="recordCount">0 records</span>
-            <button class="btn btn-outline btn-sm" id="exportCsvBtn">CSV</button>
-            <button class="btn btn-outline btn-sm" id="exportXlsBtn">Excel</button>
-          </div>
+          <button class="btn btn-primary" id="newCorrectionBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Entry
+          </button>
         </div>
-        <div class="table-wrapper">
-          <table class="data-table" id="correctionsTable">
-            <thead><tr>
-              <th class="col-ticket sortable" data-col="ticket">Service Ticket <svg class="sort-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15l5 5 5-5"/><path d="M7 9l5-5 5 5"/></svg></th>
-              <th class="col-query">Query Executed</th>
-              <th class="col-exec sortable" data-col="executed_by">Executed By <svg class="sort-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15l5 5 5-5"/><path d="M7 9l5-5 5 5"/></svg></th>
-              <th class="col-date sortable" data-col="date">Date <svg class="sort-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 15l5 5 5-5"/><path d="M7 9l5-5 5 5"/></svg></th>
-              <th class="col-status">Status</th>
-              <th class="col-actions">Actions</th>
-            </tr></thead>
-            <tbody id="correctionsBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination" id="pagination"></div>
-      </section>
+      </header>
 
-      <!-- ════════════════════ ADD / EDIT ════════════════════ -->
-      <section class="view" id="view-add">
-        <div class="form-container">
-          <div class="form-card">
-            <div class="form-card-header">
-              <div class="form-card-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
-              <div><h2 id="formTitle">New Backend Correction</h2><p id="formSubtitle">Log a backend query/command against a service ticket</p></div>
+      <div class="views-container">
+        
+        <!-- DASHBOARD VIEW -->
+        <div class="view active" id="view-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card glass-card">
+              <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></div>
+              <div class="stat-value" id="statTotal">--</div>
+              <div class="stat-label">Total Corrections</div>
             </div>
-            <form id="correctionForm" novalidate>
-              <input type="hidden" id="editId" />
-              <div class="form-row two-col">
-                <div class="form-group">
-                  <label class="form-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg> Service Ticket <span class="required">*</span></label>
-                  <div class="input-with-action">
-                    <input type="text" id="ticketInput" class="form-input" placeholder="e.g. CX-12345" required />
-                    <button type="button" class="cx-fetch-btn" id="cxFetchBtn" title="Fetch from Oracle CX"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> CX</button>
-                  </div>
-                  <span class="field-error" id="ticketError"></span>
-                </div>
-                <div class="form-group">
-                  <label class="form-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Executed By <span class="required">*</span></label>
-                  <select id="executedInput" class="form-input" required>
-                    <option value="">-- Select User --</option>
-                  </select>
-                  <span class="field-error" id="executedError"></span>
-                </div>
+            <div class="stat-card glass-card">
+              <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
+              <div class="stat-value" id="statToday">--</div>
+              <div class="stat-label">Today</div>
+            </div>
+            <div class="stat-card glass-card">
+              <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
+              <div class="stat-value" id="statWeek">--</div>
+              <div class="stat-label">This Week</div>
+            </div>
+            <div class="stat-card glass-card">
+              <div class="stat-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
+              <div class="stat-value" id="statMonth">--</div>
+              <div class="stat-label">This Month</div>
+            </div>
+          </div>
+
+          <div class="dashboard-split">
+            <div class="glass-card recent-card">
+              <div class="card-header">
+                <h3>Recent Corrections</h3>
+                <button class="btn btn-icon btn-sm" onclick="app.switchView('corrections')">View All</button>
               </div>
-              <div class="form-row two-col">
-                <div class="form-group">
-                  <label class="form-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Date <span class="required">*</span></label>
-                  <input type="date" id="dateInput" class="form-input" required />
-                  <span class="field-error" id="dateError"></span>
-                </div>
-                <div class="form-group">
-                  <label class="form-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Status</label>
-                  <select id="statusInput" class="form-input">
-                    <option value="Completed">Completed</option>
-                    <option value="Pending Verification">Pending Verification</option>
-                    <option value="Rolled Back">Rolled Back</option>
-                    <option value="Failed">Failed</option>
-                  </select>
-                </div>
+              <div class="table-responsive" id="recentList">
+                <div class="loader"></div>
               </div>
-              <div class="form-group">
-                <label class="form-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Query Executed <span class="required">*</span></label>
-                <div class="query-editor-wrap">
-                  <div class="query-toolbar"><span class="query-lang-badge">SQL / COMMAND</span><div style="display:flex;gap:6px"><button type="button" class="btn-icon-sm" id="clearQueryBtn" title="Clear"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button></div></div>
-                  <textarea id="queryInput" class="form-input query-textarea" placeholder="Paste or type the SQL query or backend command..." rows="8" required spellcheck="false"></textarea>
-                </div>
-                <span class="field-error" id="queryError"></span>
+            </div>
+            <div class="glass-card chart-card">
+              <div class="card-header">
+                <h3>Activity (14 Days)</h3>
               </div>
-              <div class="form-group">
-                <label class="form-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Notes / Remarks <span class="optional">(optional)</span></label>
-                <textarea id="notesInput" class="form-input notes-textarea" placeholder="Any additional context..." rows="3"></textarea>
+              <div class="chart-container">
+                <canvas id="activityChart"></canvas>
               </div>
-              <div class="form-actions">
-                <button type="button" class="btn btn-ghost" id="cancelFormBtn">Cancel</button>
-                <button type="submit" class="btn btn-primary" id="submitBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Correction</button>
-              </div>
-            </form>
+            </div>
           </div>
         </div>
-      </section>
 
-      <!-- ════════════════════ SEARCH ════════════════════ -->
-      <section class="view" id="view-search">
-        <div class="search-hero">
-          <div class="search-hero-inner">
-            <h2>Full-Text Search</h2>
-            <p>Search across service tickets, SQL queries, notes, and executor names</p>
-            <div class="search-bar-big">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="searchInput" placeholder="Type a ticket number, SQL keyword, table name..." autocomplete="off" />
-              <button class="btn btn-primary" id="searchBtn">Search</button>
-            </div>
-            <div class="search-chips"><span class="search-chip-label">Try:</span><button class="search-chip" data-q="UPDATE">UPDATE</button><button class="search-chip" data-q="INSERT">INSERT</button><button class="search-chip" data-q="DELETE FROM">DELETE FROM</button></div>
-            <div class="search-filters" id="searchFilters">
-              <select id="searchFilterExecutor" class="filter-select"><option value="">All Executors</option></select>
-              <select id="searchFilterStatus" class="filter-select">
+        <!-- CORRECTIONS VIEW -->
+        <div class="view" id="view-corrections">
+          <div class="glass-card full-height">
+            <div class="filter-bar">
+              <input type="text" id="searchCorrections" placeholder="Search ticket, query, notes..." class="form-control">
+              <select id="filterStatus" class="form-control">
                 <option value="">All Statuses</option>
                 <option value="Completed">Completed</option>
-                <option value="Pending Verification">Pending Verification</option>
-                <option value="Rolled Back">Rolled Back</option>
+                <option value="Pending">Pending</option>
                 <option value="Failed">Failed</option>
+                <option value="Rolled Back">Rolled Back</option>
               </select>
-              <input type="date" id="searchFilterDateFrom" class="filter-select" title="From date" />
-              <span class="date-sep">-</span>
-              <input type="date" id="searchFilterDateTo" class="filter-select" title="To date" />
-              <button class="btn btn-ghost btn-sm" id="clearSearchFilters">Clear Filters</button>
+              <button class="btn btn-outline" id="exportBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Export CSV
+              </button>
+            </div>
+            <div class="table-responsive full-table" id="correctionsList">
+              <div class="loader"></div>
+            </div>
+            <div class="pagination" id="paginationControls"></div>
+          </div>
+        </div>
+
+        <!-- USERS VIEW -->
+        <div class="view" id="view-users">
+          <div class="glass-card">
+            <div class="card-header">
+              <h3>User Management</h3>
+              <button class="btn btn-primary btn-sm" id="newUserBtn">Add User</button>
+            </div>
+            <div class="table-responsive" id="usersList">
+              <div class="loader"></div>
             </div>
           </div>
         </div>
-        <div id="searchResults"><div class="empty-state" style="padding:40px"><p>Enter a search term above to find corrections</p></div></div>
-      </section>
 
-      <!-- ════════════════════ IMPORT / EXPORT ════════════════════ -->
-      <section class="view" id="view-import-export">
-        <div class="ie-grid">
-          <div class="ie-card">
-            <div class="ie-card-header import"><div class="ie-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 17 12 21 8 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg></div><div><h3>Import from Excel</h3><p>Upload your existing Excel sheet to import corrections</p></div></div>
-            <div class="ie-card-body">
-              <div class="drop-zone" id="importDropZone"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg><p>Drag & drop your .xlsx file here</p><p class="drop-sub">or click to browse</p><input type="file" id="importFile" accept=".xlsx,.xls" style="display:none" /></div>
-              <div class="import-options"><label class="form-label" style="margin-bottom:8px">Duplicate handling:</label><div class="radio-group"><label class="radio-opt"><input type="radio" name="importMode" value="skip" checked /><span>Skip duplicates</span></label><label class="radio-opt"><input type="radio" name="importMode" value="all" /><span>Import all</span></label></div></div>
-              <div id="columnMappingSection" class="column-mapping" style="display:none">
-                <label class="form-label" style="margin-bottom:10px">Column Mapping:</label>
-                <p class="settings-desc" style="margin-bottom:10px">Map your Excel columns to the required fields. Auto-detected where possible.</p>
-                <div class="mapping-grid" id="mappingGrid"></div>
-              </div>
-              <div id="importPreview" class="import-preview" style="display:none"></div>
-              <div class="ie-actions"><button class="btn btn-ghost btn-sm" id="previewImportBtn" disabled>Preview</button><button class="btn btn-primary" id="doImportBtn" disabled>Import</button></div>
+        <!-- SETTINGS VIEW -->
+        <div class="view" id="view-settings">
+          <div class="settings-grid">
+            <div class="glass-card">
+              <h3>Account Security</h3>
+              <form id="passwordForm">
+                <div class="input-group">
+                  <label>Current Password</label>
+                  <input type="password" id="currentPassword" required>
+                </div>
+                <div class="input-group">
+                  <label>New Password</label>
+                  <input type="password" id="newPassword" required minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary">Update Password</button>
+              </form>
             </div>
-          </div>
-          <div class="ie-card">
-            <div class="ie-card-header export"><div class="ie-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg></div><div><h3>Export Data</h3><p>Download all corrections as Excel or CSV</p></div></div>
-            <div class="ie-card-body">
-              <div class="export-opts">
-                <div class="export-opt"><div class="export-opt-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="export-opt-info"><strong>Excel (.xlsx)</strong><span>Styled spreadsheet with filters</span></div><button class="btn btn-outline btn-sm" id="downloadXlsxBtn">Download</button></div>
-                <div class="export-opt"><div class="export-opt-icon csv"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="export-opt-info"><strong>CSV (.csv)</strong><span>Plain text format</span></div><button class="btn btn-outline btn-sm" id="downloadCsvBtn2">Download</button></div>
-              </div>
+            <div class="glass-card">
+              <h3>System Information</h3>
+              <ul class="sys-info">
+                <li><span>Database Engine:</span> <strong class="highlight">Oracle Database</strong></li>
+                <li><span>Connection Pool:</span> <strong class="highlight">Active</strong></li>
+                <li><span>Real-time Sync:</span> <strong class="highlight">Connected</strong></li>
+              </ul>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- ════════════════════ BACKUPS ════════════════════ -->
-      <section class="view" id="view-backups">
-        <div class="backups-header"><div><p class="backups-sub">Backups are stored in the <code>backups/</code> folder on the server.</p></div><button class="btn btn-primary" id="createBackupBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Create Backup Now</button></div>
-        <div class="table-wrapper" style="margin-top:12px"><table class="data-table"><thead><tr><th>Filename</th><th>Type</th><th>Size</th><th>Created</th><th style="text-align:right">Actions</th></tr></thead><tbody id="backupsBody"><tr><td colspan="5" class="loading-row">Loading backups...</td></tr></tbody></table></div>
-      </section>
-
-      <!-- ════════════════════ SETTINGS ════════════════════ -->
-      <section class="view" id="view-settings">
-        <div class="settings-grid">
-
-          <!-- User Management (Admin) -->
-          <div class="settings-card admin-only" style="grid-column:1/-1">
-            <div class="settings-card-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> User Management</div>
-            <div class="settings-card-body">
-              <div class="user-mgmt-header"><p class="settings-desc">Manage portal users and their roles. Users appear in the "Executed By" dropdown.</p><button class="btn btn-primary btn-sm" id="addUserBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add User</button></div>
-              <div class="table-wrapper"><table class="data-table"><thead><tr><th>Username</th><th>Display Name</th><th>Role</th><th>Status</th><th>Created</th><th style="text-align:right">Actions</th></tr></thead><tbody id="usersBody"><tr><td colspan="6" class="loading-row">Loading users...</td></tr></tbody></table></div>
-            </div>
-          </div>
-
-          <!-- Change Password -->
-          <div class="settings-card">
-            <div class="settings-card-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Change Password</div>
-            <div class="settings-card-body">
-              <div class="form-group"><label class="form-label">Current Password</label><input type="password" id="currentPwInput" class="form-input" placeholder="Enter current password" style="max-width:320px" /></div>
-              <div class="form-group"><label class="form-label">New Password</label><input type="password" id="newPwInput" class="form-input" placeholder="Enter new password (min 4 chars)" style="max-width:320px" /></div>
-              <button class="btn btn-primary btn-sm" id="changePwBtn">Change Password</button>
-            </div>
-          </div>
-
-          <!-- Theme -->
-          <div class="settings-card">
-            <div class="settings-card-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Appearance</div>
-            <div class="settings-card-body"><div class="theme-toggle"><button class="theme-btn active" data-theme="dark" id="themeDark">Dark</button><button class="theme-btn" data-theme="light" id="themeLight">Light</button></div></div>
-          </div>
-
-          <!-- Database Info -->
-          <div class="settings-card admin-only">
-            <div class="settings-card-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> Database</div>
-            <div class="settings-card-body"><div class="db-status-row"><div class="db-status-item"><span class="db-status-label">Engine</span><span class="db-status-value" id="dbTypeDisplay">SQLite (FTS5)</span></div><div class="db-status-item"><span class="db-status-label">Path</span><span class="db-status-value" id="dbFileDisplay">corrections.db</span></div></div></div>
-          </div>
-
-          <!-- Server Config -->
-          <div class="settings-card oracle-card admin-only">
-            <div class="settings-card-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Server Configuration</div>
-            <div class="settings-card-body">
-              <p class="settings-desc">Configure the host and port the portal listens on. Other machines on the network can access via <code id="accessUrlDisplay">http://localhost:5000</code>. <strong>Restart required</strong> after changes.</p>
-              <div class="form-row two-col">
-                <div class="form-group"><label class="form-label">Host / Bind Address</label><input type="text" id="serverHost" class="form-input" placeholder="0.0.0.0 (all interfaces)" /></div>
-                <div class="form-group"><label class="form-label">Port</label><input type="number" id="serverPort" class="form-input" value="5000" min="1" max="65535" /></div>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary btn-sm" id="saveServerConfigBtn">Save & Restart Required</button></div>
-              <div id="serverConfigMsg" class="oracle-test-result" style="display:none"></div>
-            </div>
-          </div>
-
-          <!-- Shared Excel Sync -->
-          <div class="settings-card oracle-card admin-only">
-            <div class="settings-card-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Shared Excel Sync</div>
-            <div class="settings-card-body">
-              <p class="settings-desc">Keep a shared Excel file in sync with the portal. Works with network drives, mapped SharePoint folders, or any local path. The Excel file is overwritten with all portal data on every change.</p>
-              <div class="form-group"><label class="form-label">Excel File Path</label><input type="text" id="sharedExcelPath" class="form-input" placeholder="e.g. \\server\share\corrections.xlsx or S:\Team\corrections.xlsx" /></div>
-              <div class="form-group" style="margin-top:8px">
-                <label class="form-label" style="cursor:pointer;gap:8px"><input type="checkbox" id="autoSyncExcel" style="accent-color:var(--accent)" /> Auto-sync on every add / edit / delete</label>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-                <button class="btn btn-primary btn-sm" id="saveExcelSyncBtn">Save Settings</button>
-                <button class="btn btn-outline btn-sm" id="syncNowBtn">Sync Now</button>
-                <button class="btn btn-ghost btn-sm" id="importFromSharedBtn">Import from Shared Excel</button>
-              </div>
-              <div id="excelSyncMsg" class="oracle-test-result" style="display:none"></div>
-            </div>
-          </div>
-
-          <!-- Oracle Migration -->
-          <div class="settings-card oracle-card admin-only">
-            <div class="settings-card-header"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Migrate to Oracle DB <span class="badge-pill">Future</span></div>
-            <div class="settings-card-body">
-              <p class="settings-desc">Enter Oracle DB credentials to test and migrate.</p>
-              <div class="form-row two-col"><div class="form-group"><label class="form-label">Host / IP</label><input type="text" id="oracleHost" class="form-input" placeholder="192.168.1.100" /></div><div class="form-group"><label class="form-label">Port</label><input type="number" id="oraclePort" class="form-input" value="1521" /></div></div>
-              <div class="form-row two-col"><div class="form-group"><label class="form-label" style="display:flex;align-items:center;gap:6px;"><select id="oracleServiceType" style="background:transparent;border:none;color:inherit;font:inherit;outline:none;cursor:pointer;padding:0;margin:0;"><option value="service_name">Service Name</option><option value="sid">SID</option></select></label><input type="text" id="oracleService" class="form-input" placeholder="ORCL / XE" /></div><div class="form-group"><label class="form-label">Username</label><input type="text" id="oracleUser" class="form-input" placeholder="bcp_user" /></div></div>
-              <div class="form-group"><label class="form-label">Password</label><input type="password" id="oraclePass" class="form-input" placeholder="Password" style="max-width:280px" /></div>
-              <div id="oracleTestResult" class="oracle-test-result" style="display:none"></div>
-              <div class="oracle-actions"><button class="btn btn-outline" id="testOracleBtn">Test Connection</button><button class="btn btn-primary" id="migrateOracleBtn" disabled>Migrate to Oracle</button></div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  </div><!-- end app-wrapper -->
-
-  <!-- ══════════════════════════════════════ MODALS ════════════════════════════ -->
-
-  <!-- View Query Modal -->
-  <div class="modal-overlay" id="viewModal">
-    <div class="modal modal-lg">
-      <div class="modal-header"><div><h3 id="modalTicketTitle">--</h3><span class="modal-sub" id="modalMeta">--</span></div><button class="modal-close" id="closeViewModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-      <div class="modal-body">
-        <div class="modal-status-row"><span class="badge" id="modalStatus"></span><span class="modal-date" id="modalDate"></span></div>
-        <div class="query-block"><div class="query-block-header"><span>Query Executed</span><button class="copy-btn" id="copyQueryBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div><pre class="query-pre" id="modalQuery"></pre></div>
-        <div class="notes-block" id="notesBlock"><div class="notes-label">Notes / Remarks</div><p id="modalNotes"></p></div>
       </div>
-      <div class="modal-footer"><button class="btn btn-ghost" id="closeViewModal2">Close</button><button class="btn btn-outline" id="editFromModal">Edit</button></div>
-    </div>
+    </main>
   </div>
 
-  <!-- Delete Confirm -->
-  <div class="modal-overlay" id="deleteModal">
-    <div class="modal modal-sm">
-      <div class="modal-header"><h3>Confirm Delete</h3><button class="modal-close" id="closeDeleteModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-      <div class="modal-body"><div class="delete-warning"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><p>Are you sure? This <strong>cannot be undone</strong>.</p><p class="delete-ticket" id="deleteTicketName"></p></div></div>
-      <div class="modal-footer"><button class="btn btn-ghost" id="cancelDeleteBtn">Cancel</button><button class="btn btn-danger" id="confirmDeleteBtn">Delete</button></div>
-    </div>
-  </div>
-
-  <!-- Backup Label Modal -->
-  <div class="modal-overlay" id="backupModal">
-    <div class="modal modal-sm">
-      <div class="modal-header"><h3>Create Backup</h3><button class="modal-close" id="closeBackupModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-      <div class="modal-body"><div class="form-group"><label class="form-label">Backup Label <span class="optional">(optional)</span></label><input type="text" id="backupLabelInput" class="form-input" placeholder="e.g. Before migration" /></div></div>
-      <div class="modal-footer"><button class="btn btn-ghost" id="cancelBackupModal">Cancel</button><button class="btn btn-primary" id="confirmBackupBtn">Create Backup</button></div>
-    </div>
-  </div>
-
-  <!-- Add/Edit User Modal -->
-  <div class="modal-overlay" id="userModal">
-    <div class="modal modal-sm">
-      <div class="modal-header"><h3 id="userModalTitle">Add User</h3><button class="modal-close" id="closeUserModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-      <div class="modal-body">
-        <input type="hidden" id="userEditId" />
-        <div class="form-group"><label class="form-label">Username <span class="required">*</span></label><input type="text" id="userUsername" class="form-input" placeholder="e.g. john.doe" autocomplete="off" /></div>
-        <div class="form-group"><label class="form-label">Display Name <span class="required">*</span></label><input type="text" id="userDisplayName" class="form-input" placeholder="e.g. John Doe" /></div>
-        <div class="form-group" id="userPwGroup"><label class="form-label">Password <span class="required">*</span></label><input type="password" id="userPassword" class="form-input" placeholder="Minimum 4 characters" autocomplete="new-password" /></div>
-        <div class="form-group"><label class="form-label">Role</label><select id="userRole" class="form-input"><option value="user">User</option><option value="admin">Admin</option></select></div>
-        <div class="form-group" id="userActiveGroup" style="display:none"><label class="form-label">Status</label><select id="userActive" class="form-input"><option value="1">Active</option><option value="0">Deactivated</option></select></div>
+  <!-- MODALS -->
+  <div class="modal-overlay" id="correctionModal">
+    <div class="glass-modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">New Correction</h2>
+        <button class="btn btn-icon close-modal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
-      <div class="modal-footer"><button class="btn btn-ghost" id="cancelUserModal">Cancel</button><button class="btn btn-primary" id="saveUserBtn">Save User</button></div>
+      <div class="modal-body">
+        <form id="correctionForm">
+          <input type="hidden" id="editId">
+          <div class="grid-2">
+            <div class="input-group">
+              <label>Ticket Number</label>
+              <input type="text" id="ticketInput" required placeholder="e.g. INC-12345">
+            </div>
+            <div class="input-group">
+              <label>Execution Date</label>
+              <input type="date" id="dateInput" required>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>SQL Query</label>
+            <textarea id="queryInput" required placeholder="UPDATE table SET..." rows="5" class="code-font"></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="input-group">
+              <label>Status</label>
+              <select id="statusInput" required>
+                <option value="Completed">Completed</option>
+                <option value="Pending">Pending</option>
+                <option value="Failed">Failed</option>
+                <option value="Rolled Back">Rolled Back</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Executed By</label>
+              <input type="text" id="executedInput" required>
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Notes (Optional)</label>
+            <textarea id="notesInput" rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline close-modal">Cancel</button>
+        <button class="btn btn-primary" id="saveCorrectionBtn">Save Entry</button>
+      </div>
     </div>
   </div>
 
-  <!-- Reset Password Modal -->
-  <div class="modal-overlay" id="resetPwModal">
-    <div class="modal modal-sm">
-      <div class="modal-header"><h3>Reset Password</h3><button class="modal-close" id="closeResetPwModal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
-      <div class="modal-body"><input type="hidden" id="resetPwUserId" /><p class="settings-desc">Set a new password for <strong id="resetPwUserName"></strong>:</p><div class="form-group"><label class="form-label">New Password</label><input type="password" id="resetPwValue" class="form-input" placeholder="Minimum 4 characters" /></div></div>
-      <div class="modal-footer"><button class="btn btn-ghost" id="cancelResetPw">Cancel</button><button class="btn btn-primary" id="confirmResetPw">Reset Password</button></div>
-    </div>
-  </div>
-
-  <!-- Toast Notifications -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- Socket.io -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js?v=2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
