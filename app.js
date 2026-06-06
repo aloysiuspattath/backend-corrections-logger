@@ -1075,12 +1075,12 @@ function setupAppConfig() {
     const cfg = {
       host: document.getElementById('oracleHost').value.trim(),
       port: parseInt(document.getElementById('oraclePort').value) || 1521,
-      service: document.getElementById('oracleService').value.trim(),
+      service_name: document.getElementById('oracleService').value.trim(),
       service_type: document.getElementById('oracleServiceType').value,
-      user: document.getElementById('oracleUser').value.trim(),
+      username: document.getElementById('oracleUser').value.trim(),
       password: document.getElementById('oraclePass').value
     };
-    if (!cfg.host || !cfg.service || !cfg.user) { toast('Fill in all Oracle fields.', 'error'); return; }
+    if (!cfg.host || !cfg.service_name || !cfg.username) { toast('Fill in all Oracle fields.', 'error'); return; }
     const resultEl = document.getElementById('oracleTestResult');
     resultEl.style.display = '';
     resultEl.textContent = 'Testing...';

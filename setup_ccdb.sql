@@ -39,7 +39,7 @@ CREATE TABLE corrections (
     ticket VARCHAR2(100) NOT NULL,
     query CLOB NOT NULL,
     executed_by VARCHAR2(100) NOT NULL,
-    execution_date DATE DEFAULT SYSDATE,
+    date_val DATE DEFAULT SYSDATE,
     status VARCHAR2(50) DEFAULT 'Pending',
     notes CLOB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
