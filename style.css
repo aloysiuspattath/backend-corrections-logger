@@ -46,6 +46,11 @@ body.theme-light {
   --border:#dde3f0; --border-light:#c5cde8;
   --text-primary:#1e293b; --text-secondary:#475569; --text-muted:#94a3b8;
   --sidebar-bg:#1a2035; --sidebar-border:#232c42;
+  --accent: #3b5bdb; --accent-light: #2c42a5; --accent-glow: rgba(59,91,219,0.18);
+  --success: #16a34a; --success-bg: rgba(22,163,74,0.15);
+  --warning: #d97706; --warning-bg: rgba(217,119,6,0.15);
+  --danger: #dc2626; --danger-bg: rgba(220,38,38,0.15);
+  --info: #0284c7; --info-bg: rgba(2,132,199,0.15);
   --shadow-sm:0 1px 3px rgba(0,0,0,0.08); --shadow-md:0 4px 16px rgba(0,0,0,0.1);
 }
 

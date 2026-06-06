@@ -16,9 +16,11 @@ build/
 db_config.json
 app_config.json
 
-# Uploads & Backups
+# Uploads & Backups & Binaries
 uploads/
 backups/
+OracleXE.zip
+OracleXE/
 
 # IDE
 .vscode/

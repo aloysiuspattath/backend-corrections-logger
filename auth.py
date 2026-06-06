@@ -15,13 +15,13 @@ from flask import request, jsonify, session
 def hash_password(password, salt=None):
     if salt is None:
         salt = secrets.token_hex(16)
-    hashed = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000)
+    hashed = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 10000)
     return f"{salt}:{hashed.hex()}"
 
 def verify_password(password, stored_hash):
     try:
         salt, hashed = stored_hash.split(':')
-        test = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000)
+        test = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 10000)
         return test.hex() == hashed
     except Exception:
         return False

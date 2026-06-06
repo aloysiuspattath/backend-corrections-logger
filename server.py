@@ -36,14 +36,19 @@ def save_app_config(cfg):
     with open(APP_CONFIG_FILE, 'w') as f:
         json.dump(cfg, f, indent=2)
 
+import threading
+
 def auto_sync_shared_excel():
     """Auto-export to shared Excel file if configured."""
-    try:
-        cfg = load_app_config()
-        if cfg.get('auto_sync_excel') and cfg.get('shared_excel_path', '').strip():
-            excel_handler.export_to_shared(cfg['shared_excel_path'])
-    except Exception as e:
-        print(f'[Auto-Sync Warning] {e}')
+    def run_sync():
+        try:
+            cfg = load_app_config()
+            if cfg.get('auto_sync_excel') and cfg.get('shared_excel_path', '').strip():
+                excel_handler.export_to_shared(cfg['shared_excel_path'])
+        except Exception as e:
+            print(f'[Auto-Sync Warning] {e}')
+    
+    threading.Thread(target=run_sync, daemon=True).start()
 
 # ─── APP SETUP ─────────────────────────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
