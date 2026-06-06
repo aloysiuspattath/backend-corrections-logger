@@ -363,6 +363,9 @@ function initSocket() {
   socket = io({ transports: ['websocket', 'polling'] });
 
   socket.on('connect', () => {
+    console.log('Socket connected');
+    if (currentView === 'dashboard') loadDashboard();
+    if (currentView === 'corrections') loadCorrections();
     document.getElementById('liveDot').title = 'Connected';
     document.querySelector('.dot-pulse').style.background = 'var(--success)';
     socket.emit('user_join', { username: currentUser ? currentUser.display_name : 'User' });
