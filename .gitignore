@@ -37,3 +37,6 @@ desktop.ini
 venv/
 env/
 .env
+
+# Logs
+logs/

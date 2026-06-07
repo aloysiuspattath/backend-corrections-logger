@@ -65,6 +65,7 @@ const App = {
 
     // Settings
     document.getElementById('passwordForm').addEventListener('submit', this.updatePassword.bind(this));
+    document.getElementById('statusForm').addEventListener('submit', this.saveStatus.bind(this));
   },
 
   async api(endpoint, options = {}) {
@@ -163,7 +164,89 @@ const App = {
     }
 
     this.initSocket();
-    this.switchView('dashboard');
+    this.loadStatuses().then(() => {
+      this.switchView('dashboard');
+    });
+  },
+
+  statusesMap: {},
+  customStatuses: [],
+
+  async loadStatuses() {
+    try {
+      const res = await this.api('/api/statuses');
+      if (res && res.ok) {
+        this.customStatuses = await res.json();
+        this.statusesMap = {};
+        
+        let selectOptions = '';
+        let filterOptions = '<option value="">All Statuses</option>';
+        let tableHtml = '';
+        
+        this.customStatuses.forEach(s => {
+          this.statusesMap[s.name] = s.color_class;
+          selectOptions += `<option value="${this.escapeHTML(s.name)}">${this.escapeHTML(s.name)}</option>`;
+          filterOptions += `<option value="${this.escapeHTML(s.name)}">${this.escapeHTML(s.name)}</option>`;
+          tableHtml += `<tr>
+            <td><strong>${this.escapeHTML(s.name)}</strong></td>
+            <td><span class="badge ${s.color_class}">${s.color_class}</span></td>
+            <td>
+              <button class="btn btn-icon btn-sm" onclick="App.deleteStatus(${s.id})" title="Delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </td>
+          </tr>`;
+        });
+        
+        document.getElementById('statusInput').innerHTML = selectOptions;
+        document.getElementById('filterStatus').innerHTML = filterOptions;
+        document.querySelector('#statusesTable tbody').innerHTML = tableHtml;
+      }
+    } catch (e) {
+      console.error("Failed to load statuses", e);
+    }
+  },
+
+  async saveStatus(e) {
+    e.preventDefault();
+    const name = document.getElementById('statusName').value;
+    const color_class = document.getElementById('statusColor').value;
+    try {
+      const res = await this.api('/api/statuses', {
+        method: 'POST',
+        body: { name, color_class }
+      });
+      if (res.ok) {
+        this.toast('Status added successfully');
+        document.getElementById('statusForm').reset();
+        await this.loadStatuses();
+      } else {
+        const err = await res.json().catch(()=>({}));
+        this.toast(err.error || 'Failed to add status', 'error');
+      }
+    } catch (e) {
+      this.toast(e.message, 'error');
+    }
+  },
+
+  async deleteStatus(id) {
+    if (!confirm('Are you sure you want to delete this status? Existing records will keep the name but lose styling.')) return;
+    try {
+      const res = await this.api(`/api/statuses/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        this.toast('Status deleted');
+        await this.loadStatuses();
+      } else {
+        const err = await res.json().catch(()=>({}));
+        this.toast(err.error || 'Failed to delete status', 'error');
+      }
+    } catch (e) {
+      this.toast(e.message, 'error');
+    }
+  },
+
+  getStatusColor(name) {
+    return this.statusesMap[name] || 'primary';
   },
 
   showLoginScreen() {
@@ -267,7 +350,7 @@ const App = {
         <td><strong>${this.escapeHTML(r.ticket)}</strong></td>
         <td>${this.escapeHTML(r.executed_by)}</td>
         <td>${r.date}</td>
-        <td><span class="badge ${r.status.toLowerCase().replace(' ', '-')}">${r.status}</span></td>
+        <td><span class="badge ${this.getStatusColor(r.status)}">${r.status}</span></td>
         <td>
           <button class="btn btn-icon btn-sm" onclick="App.viewCorrection(${r.id})" title="View">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -294,7 +377,7 @@ const App = {
         <td><strong>${this.escapeHTML(r.ticket)}</strong></td>
         <td>${this.escapeHTML(r.executed_by)}</td>
         <td>${r.date}</td>
-        <td><span class="badge ${r.status.toLowerCase().replace(' ', '-')}">${r.status}</span></td>
+        <td><span class="badge ${this.getStatusColor(r.status)}">${r.status}</span></td>
         <td class="text-muted" style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHTML(r.notes || '-')}</td>
         <td>
           <button class="btn btn-icon btn-sm" onclick="App.viewCorrection(${r.id})" title="View">
@@ -344,7 +427,7 @@ const App = {
       document.getElementById('viewTicketTitle').textContent = data.ticket || 'View Correction';
       document.getElementById('viewDate').textContent = data.date || '-';
       
-      const statusBadge = `<span class="badge ${data.status.toLowerCase().replace(' ', '-')}">${data.status}</span>`;
+      const statusBadge = `<span class="badge ${this.getStatusColor(data.status)}">${data.status}</span>`;
       document.getElementById('viewStatus').innerHTML = statusBadge;
       
       document.getElementById('viewExecutedBy').textContent = data.executed_by || '-';

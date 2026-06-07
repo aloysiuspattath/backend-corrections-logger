@@ -100,7 +100,22 @@ def init_tables():
             )
         """)
         conn.commit()
-    
+    # Check if bcp_statuses exists
+    cursor.execute("SELECT count(*) FROM user_tables WHERE table_name = 'BCP_STATUSES'")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("""
+            CREATE TABLE bcp_statuses (
+                id NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                name VARCHAR2(50) NOT NULL UNIQUE,
+                color_class VARCHAR2(50) NOT NULL
+            )
+        """)
+        # Seed default statuses
+        cursor.execute("INSERT INTO bcp_statuses (name, color_class) VALUES ('Pending', 'warning')")
+        cursor.execute("INSERT INTO bcp_statuses (name, color_class) VALUES ('Completed', 'success')")
+        cursor.execute("INSERT INTO bcp_statuses (name, color_class) VALUES ('Failed', 'danger')")
+        conn.commit()
+
     cursor.close()
     release_connection(conn)
 
@@ -266,3 +281,44 @@ def get_activity(days=14):
     cursor.close()
     release_connection(conn)
     return rows
+
+# ─── STATUS MANAGEMENT ─────────────────────────────────────────────────────────
+
+def get_statuses():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, color_class FROM bcp_statuses ORDER BY id ASC")
+    cols = [col[0].lower() for col in cursor.description]
+    statuses = [dict(zip(cols, row)) for row in cursor.fetchall()]
+    cursor.close()
+    release_connection(conn)
+    return statuses
+
+def add_status(name, color_class):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO bcp_statuses (name, color_class) VALUES (:1, :2) RETURNING id INTO :3", 
+                       (name, color_class, cursor.var(oracledb.NUMBER)))
+        conn.commit()
+        return True, "Status added successfully"
+    except oracledb.IntegrityError:
+        return False, "Status name already exists"
+    except Exception as e:
+        return False, str(e)
+    finally:
+        cursor.close()
+        release_connection(conn)
+
+def delete_status(status_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM bcp_statuses WHERE id = :1", (status_id,))
+        conn.commit()
+        return True, "Status deleted successfully"
+    except Exception as e:
+        return False, str(e)
+    finally:
+        cursor.close()
+        release_connection(conn)

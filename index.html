@@ -167,10 +167,6 @@
               <input type="text" id="searchCorrections" placeholder="Search ticket, query, notes..." class="form-control">
               <select id="filterStatus" class="form-control">
                 <option value="">All Statuses</option>
-                <option value="Completed">Completed</option>
-                <option value="Pending">Pending</option>
-                <option value="Failed">Failed</option>
-                <option value="Rolled Back">Rolled Back</option>
               </select>
               <button class="btn btn-outline" id="exportBtn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -222,6 +218,32 @@
                 <li><span>Real-time Sync:</span> <strong class="highlight">Connected</strong></li>
               </ul>
             </div>
+            
+            <div class="glass-card" id="statusesSection">
+              <h3>Custom Statuses</h3>
+              <form id="statusForm" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-end;">
+                <div class="input-group" style="flex: 1; margin: 0;">
+                  <label>Status Name</label>
+                  <input type="text" id="statusName" required placeholder="e.g. Awaiting QA">
+                </div>
+                <div class="input-group" style="width: 120px; margin: 0;">
+                  <label>Color</label>
+                  <select id="statusColor" required>
+                    <option value="primary">Primary</option>
+                    <option value="success">Success</option>
+                    <option value="warning">Warning</option>
+                    <option value="danger">Danger</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="padding: 10px 16px;">Add</button>
+              </form>
+              <div class="table-responsive">
+                <table class="data-table" id="statusesTable">
+                  <thead><tr><th>Name</th><th>Color</th><th>Action</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -257,10 +279,6 @@
             <div class="input-group">
               <label>Status</label>
               <select id="statusInput" required>
-                <option value="Completed">Completed</option>
-                <option value="Pending">Pending</option>
-                <option value="Failed">Failed</option>
-                <option value="Rolled Back">Rolled Back</option>
               </select>
             </div>
             <div class="input-group">
