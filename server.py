@@ -1,4 +1,7 @@
 import os
+import json
+import logging
+from logging.handlers import RotatingFileHandler
 from flask import Flask, request, jsonify, session, send_file
 from flask_socketio import SocketIO
 from datetime import timedelta
@@ -8,11 +11,40 @@ import csv
 import database
 import auth
 
+# ─── LOGGING CONFIGURATION ──────────────────────────────────────────────────
+os.makedirs('logs', exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        RotatingFileHandler('logs/portal.log', maxBytes=10*1024*1024, backupCount=5),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__, static_url_path='', static_folder='.')
-app.secret_key = 'bcp-super-secret-key' # Use a static key or env var for session persistence
+
+# ─── SECURE CONFIGURATION ──────────────────────────────────────────────────
+config_path = database.DB_CONFIG_FILE
+if os.path.exists(config_path):
+    with open(config_path, 'r') as f:
+        app_config = json.load(f)
+else:
+    app_config = {}
+
+if 'app_secret_key' not in app_config:
+    import secrets
+    app_config['app_secret_key'] = secrets.token_hex(32)
+    with open(config_path, 'w') as f:
+        json.dump(app_config, f, indent=4)
+        logger.info("Generated new secure app_secret_key.")
+
+app.secret_key = app_config['app_secret_key']
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Remove cors_allowed_origins="*" for production security
+socketio = SocketIO(app, async_mode='gevent')
 
 # Initialize DB
 database.init_tables()
@@ -166,6 +198,39 @@ def delete_correction(cid):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ─── STATUS MANAGEMENT ─────────────────────────────────────────────────────────
+@app.route('/api/statuses', methods=['GET'])
+@auth.login_required
+def get_statuses():
+    try:
+        return jsonify(database.get_statuses())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/statuses', methods=['POST'])
+@auth.admin_required
+def add_status():
+    data = request.json or {}
+    name = data.get('name', '').strip()
+    color_class = data.get('color_class', 'primary').strip()
+    if not name:
+        return jsonify({'error': 'Status name is required'}), 400
+    
+    success, msg = database.add_status(name, color_class)
+    if success:
+        socketio.emit('statuses_updated')
+        return jsonify({'success': True})
+    return jsonify({'error': msg}), 400
+
+@app.route('/api/statuses/<int:sid>', methods=['DELETE'])
+@auth.admin_required
+def delete_status(sid):
+    success, msg = database.delete_status(sid)
+    if success:
+        socketio.emit('statuses_updated')
+        return jsonify({'success': True})
+    return jsonify({'error': msg}), 400
+
 # ─── STATS & METADATA ──────────────────────────────────────────────────────────
 @app.route('/api/stats')
 @auth.login_required
@@ -224,7 +289,12 @@ def index():
     return app.send_static_file('index.html')
 
 if __name__ == '__main__':
+    from gevent import pywsgi
+    from geventwebsocket.handler import WebSocketHandler
+    
     cfg = database.get_config().get('app', {})
     port = cfg.get('port', 5000)
-    print(f"[*] Starting Backend Corrections Portal on port {port}")
-    socketio.run(app, host='0.0.0.0', port=port, debug=False, allow_unsafe_werkzeug=True)
+    logger.info(f"[*] Starting Backend Corrections Portal (Production WSGI) on port {port}")
+    
+    server = pywsgi.WSGIServer(('0.0.0.0', port), app, handler_class=WebSocketHandler)
+    server.serve_forever()
