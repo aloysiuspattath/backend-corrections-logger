@@ -80,7 +80,7 @@ const App = {
     const url = endpoint.startsWith('/') ? `${basePath}${endpoint}` : endpoint;
     
     const res = await fetch(url, options);
-    if (res.status === 401) {
+    if (res.status === 401 && !options.isLogin) {
       const data = await res.json().catch(() => ({}));
       if (data.auth_required || data.authenticated === false) {
         this.showLoginScreen();
@@ -118,7 +118,8 @@ const App = {
       
       const res = await this.api('/api/auth/login', {
         method: 'POST',
-        body: { username, password }
+        body: { username, password },
+        isLogin: true
       });
       const data = await res.json();
       if (res.ok && data.authenticated) {
