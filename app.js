@@ -73,7 +73,12 @@ const App = {
       options.headers = { ...options.headers, 'Content-Type': 'application/json' };
       options.body = JSON.stringify(options.body);
     }
-    const res = await fetch(endpoint, options);
+    
+    // Auto-detect base path (e.g., if hosted under /bcportal/)
+    const basePath = window.location.pathname.replace(/\/$/, '');
+    const url = endpoint.startsWith('/') ? `${basePath}${endpoint}` : endpoint;
+    
+    const res = await fetch(url, options);
     if (res.status === 401) {
       const data = await res.json().catch(() => ({}));
       if (data.auth_required || data.authenticated === false) {
@@ -110,12 +115,10 @@ const App = {
       const username = document.getElementById('loginUsername').value;
       const password = document.getElementById('loginPassword').value;
       
-      const res = await fetch('/api/auth/login', {
+      const res = await this.api('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: { username, password }
       });
-      
       const data = await res.json();
       if (res.ok && data.authenticated) {
         this.onLoginSuccess(data.user);
@@ -134,7 +137,7 @@ const App = {
   },
 
   async handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await this.api('/api/auth/logout', { method: 'POST' });
     window.location.reload();
   },
 
@@ -458,10 +461,9 @@ const App = {
     };
 
     try {
-      const res = await fetch('/api/users', {
+      const res = await this.api('/api/users', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: data
       });
       if (res.status === 401) { this.handleLogout(); return; }
       const json = await res.json();
@@ -633,7 +635,11 @@ const App = {
 
   initSocket() {
     if (socket) return;
-    socket = io({ transports: ['websocket', 'polling'] });
+    const basePath = window.location.pathname.replace(/\/$/, '');
+    socket = io({ 
+      path: basePath + '/socket.io',
+      transports: ['websocket', 'polling'] 
+    });
     
     socket.on('connect', () => {
       document.getElementById('liveText').textContent = 'Live Sync Active';
