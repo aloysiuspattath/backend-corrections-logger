@@ -21,7 +21,7 @@ END;
 /
 
 -- 3. Create the user (this acts as the 'ccdb' database/schema)
-CREATE USER appuser IDENTIFIED BY "feed#app#123" DEFAULT TABLESPACE users QUOTA UNLIMITED ON users;
+CREATE USER appuser IDENTIFIED BY "yourpassword" DEFAULT TABLESPACE users QUOTA UNLIMITED ON users;
 
 -- 4. Grant privileges
 GRANT CONNECT, RESOURCE, CREATE VIEW, CREATE PROCEDURE, CREATE SYNONYM TO appuser;
@@ -73,5 +73,5 @@ COMMIT;
 -- Port: 1521
 -- Service: XEPDB1  (Important: use XEPDB1, not XE)
 -- User: appuser
--- Password: feed#app#123
+-- Password: yourpassword
 -- =====================================================================
