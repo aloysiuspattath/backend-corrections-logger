@@ -5,3 +5,4 @@ gevent
 gevent-websocket
 openpyxl
 oracledb
+ldap3
